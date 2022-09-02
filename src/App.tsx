@@ -8,7 +8,6 @@ function App() {
 			<StompProvider subsribeUrl='https://localhost:8443/socket' subscribed={['/ws/message']}>
 				<Main />
 			</StompProvider>
-			<Main />
 		</div>
 	);
 }
