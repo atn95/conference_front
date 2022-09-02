@@ -9,12 +9,14 @@ export const StompProvider = (props: StompProviderProps) => {
 	const [client, setClient] = useState<Client | undefined>(undefined);
 	//loop through subscribed to sub to channel
 	const [subscribed] = useState(props.subscribed);
+	const wssUrl = props.subsribeUrl.replace('https', 'wss');
 	const socketInfo: socketInfo = useMemo(() => {
 		return { client, subscribed };
 	}, [client, subscribed]);
 
 	useEffect(() => {
-		const wssUrl = props.subsribeUrl.replace('https', 'wss');
+		let subbed: StompSubscription;
+
 		const stompClient = new Client({
 			brokerURL: wssUrl,
 			debug: function (str) {
@@ -30,9 +32,11 @@ export const StompProvider = (props: StompProviderProps) => {
 				return new SockJS(props.subsribeUrl) as IStompSocket;
 			};
 		}
-
 		stompClient.onConnect = (frame: IFrame): void => {
 			console.log(frame);
+			subbed = stompClient.subscribe(`/topic/messages`, (message) => {
+				console.log(JSON.parse(message.body));
+			});
 		};
 
 		stompClient.activate();
@@ -40,20 +44,9 @@ export const StompProvider = (props: StompProviderProps) => {
 		setClient(stompClient);
 		return () => {
 			client?.deactivate();
+			subbed.unsubscribe();
 		};
 	}, []);
-
-	useEffect(() => {
-		let subbed: StompSubscription;
-		if (client?.connected) {
-			subbed = client.subscribe('/topic/messages', (message) => {
-				console.log(message);
-			});
-		}
-		return () => {
-			subbed?.unsubscribe();
-		};
-	}, [subscribed, client]);
 
 	return <StompContext.Provider value={socketInfo}>{props.children}</StompContext.Provider>;
 };
