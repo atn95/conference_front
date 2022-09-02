@@ -1,25 +1,47 @@
-import React, { useEffect, useRef, useState, createContext } from 'react';
+import React, { useEffect, useState, createContext, useMemo, useContext } from 'react';
 import SockJS from 'sockjs-client';
-import { Client, Stomp } from '@stomp/stompjs';
+import { Client, Stomp, StompSubscription } from '@stomp/stompjs';
+import { socketInfo, StompProviderProps } from '../types/SocketTypes';
 
-const StompContext = createContext(undefined);
-
-export interface StompProviderProps {
-	children: any;
-	subsribeUrl: string;
-	subscribed: Array<String>;
-}
+const StompContext = createContext<socketInfo | undefined>(undefined);
 
 export const StompProvider = (props: StompProviderProps) => {
-	const [socket, setSocket] = useState<any>(undefined);
 	const [client, setClient] = useState<Client | undefined>(undefined);
-
-	useEffect(() => {
-		const sock = SockJS(props.subsribeUrl);
-		const stompClient = Stomp.over(sock);
-		setSocket(sock);
-		setClient(stompClient);
+	//loop through subscribed to sub to channel
+	const [subscribed] = useState(props.subscribed);
+	const socketInfo: socketInfo = useMemo(() => {
+		return { client, subscribed };
 	}, []);
 
-	return <StompContext.Provider value={undefined}>{props.children}</StompContext.Provider>;
+	useEffect(() => {
+		const stompClient = Stomp.over(new SockJS(props.subsribeUrl));
+		// const stompClient = Stomp.client(props.subsribeUrl);
+
+		stompClient.connect({}, (frame: string) => {
+			console.log('connected: ' + frame);
+		});
+		setClient(stompClient);
+
+		return () => {
+			client?.deactivate();
+		};
+	}, []);
+
+	useEffect(() => {
+		let subbed: StompSubscription;
+		if (client?.connected) {
+			subbed = client.subscribe('/topic/messages', (message) => {
+				console.log(message);
+			});
+		}
+		return () => {
+			subbed?.unsubscribe();
+		};
+	}, [subscribed, client]);
+
+	return <StompContext.Provider value={socketInfo}>{props.children}</StompContext.Provider>;
+};
+
+export const useSocketContext = () => {
+	useContext(StompContext);
 };
