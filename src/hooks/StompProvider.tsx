@@ -1,22 +1,22 @@
 import React, { useEffect, useState, createContext, useMemo, useContext } from 'react';
 import SockJS from 'sockjs-client';
-import { Client, IFrame, IStompSocket, Stomp, StompSubscription } from '@stomp/stompjs';
-import { socketInfo, StompProviderProps } from '../types/SocketTypes';
+import { Client, IFrame, IStompSocket, StompSubscription } from '@stomp/stompjs';
+import { socketInfo, StompProviderProps, subscription } from '../types/SocketTypes';
 
 const StompContext = createContext<socketInfo | undefined>(undefined);
+const SubscriptionContext = createContext<any>(undefined);
 
 export const StompProvider = (props: StompProviderProps) => {
 	const [client, setClient] = useState<Client | undefined>(undefined);
 	//loop through subscribed to sub to channel
-	const [subscribed] = useState(props.subscribed);
+	const [subscriptions, setSubscribed] = useState<Array<subscription>>(props.subscriptions);
+	const [activeSubs, setActiveSubs] = useState<Array<StompSubscription>>([]);
 	const wssUrl = props.subsribeUrl.replace('https', 'wss');
 	const socketInfo: socketInfo = useMemo(() => {
-		return { client, subscribed };
-	}, [client, subscribed]);
+		return { client, subscriptions };
+	}, [client, subscriptions]);
 
 	useEffect(() => {
-		let subbed: StompSubscription;
-
 		const stompClient = new Client({
 			brokerURL: wssUrl,
 			debug: function (str) {
@@ -33,24 +33,28 @@ export const StompProvider = (props: StompProviderProps) => {
 			};
 		}
 		stompClient.onConnect = (frame: IFrame): void => {
-			console.log(frame);
-			subbed = stompClient.subscribe(`/topic/messages`, (message) => {
-				console.log(JSON.parse(message.body));
-			});
+			const active = [];
+			for (const sub of subscriptions) {
+				let subs = stompClient.subscribe(sub.endpoint, sub.callback);
+				active.push(subs);
+			}
+			console.log(active);
+			setActiveSubs(active);
 		};
 
 		stompClient.activate();
-
 		setClient(stompClient);
 		return () => {
+			for (const sub of activeSubs) {
+				sub.unsubscribe();
+			}
 			client?.deactivate();
-			subbed.unsubscribe();
 		};
 	}, []);
 
 	return <StompContext.Provider value={socketInfo}>{props.children}</StompContext.Provider>;
 };
 
-export const useSocketContext = () => {
+export const useSocket = () => {
 	return useContext(StompContext);
 };

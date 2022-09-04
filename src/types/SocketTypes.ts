@@ -2,10 +2,15 @@ import { Client } from '@stomp/stompjs';
 
 export interface socketInfo {
 	client: Client | undefined;
-	subscribed: Array<String>;
+	subscriptions: Array<subscription>;
 }
 export interface StompProviderProps {
 	children: any;
 	subsribeUrl: string;
-	subscribed: Array<String>;
+	subscriptions: Array<subscription>;
+}
+
+export interface subscription {
+	endpoint: string;
+	callback: (data: any) => void;
 }
