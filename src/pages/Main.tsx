@@ -15,7 +15,7 @@ export default function Main(props: MainPageProps) {
 			<div className={styles['body']}>
 				<div className={styles['main-window']}></div>
 				<div className={styles['chat']}>
-					<ChatBox></ChatBox>
+					<ChatBox room={props.rooms[0]} />
 				</div>
 			</div>
 		</div>
