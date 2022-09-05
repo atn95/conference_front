@@ -1,3 +1,5 @@
 export interface message {
-	messageContent: string;
+	room_id: number;
+	author_id: number;
+	content: string;
 }

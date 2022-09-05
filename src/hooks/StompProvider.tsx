@@ -1,10 +1,9 @@
-import React, { useEffect, useState, createContext, useMemo, useContext } from 'react';
+import { useEffect, useState, createContext, useMemo, useContext } from 'react';
 import SockJS from 'sockjs-client';
 import { Client, IFrame, IStompSocket, StompSubscription } from '@stomp/stompjs';
 import { socketInfo, StompProviderProps, subscription } from '../types/SocketTypes';
 
 const StompContext = createContext<socketInfo | undefined>(undefined);
-const SubscriptionContext = createContext<any>(undefined);
 
 export const StompProvider = (props: StompProviderProps) => {
 	const [client, setClient] = useState<Client | undefined>(undefined);

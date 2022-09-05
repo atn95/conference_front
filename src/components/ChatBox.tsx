@@ -1,14 +1,19 @@
 import styles from '../styles/components/ChatBox.module.css';
 import axios from 'axios';
 import { message } from '../types/PostTypes';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ChatBoxProps } from '../types/ComponentProps';
-import { resolveModuleName } from 'typescript';
 import { recievedMessage } from '../types/RecieveTypes';
 
 export default function ChatBox(props: ChatBoxProps) {
 	const [input, setInput] = useState<string>('');
 	const [send, setSend] = useState<boolean>(false);
+	const chatBottom = useRef<null | HTMLDivElement>(null);
+
+	function scrollToBottom() {
+		console.log('called');
+		chatBottom.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+	}
 
 	const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
 		setInput(e.currentTarget.value);
@@ -16,9 +21,8 @@ export default function ChatBox(props: ChatBoxProps) {
 
 	const sendChatMessage = async () => {
 		try {
-			let msg: message = { messageContent: input };
+			let msg: message = { room_id: 3, author_id: 1, content: input };
 			const res = await axios.post('https://localhost:8443/api/chat/sendchat/3', msg);
-			console.log(res.data.response);
 			setInput('');
 			setSend(false);
 		} catch (e) {
@@ -37,12 +41,21 @@ export default function ChatBox(props: ChatBoxProps) {
 		}
 	}, [send]);
 
+	useEffect(() => {
+		scrollToBottom();
+	}, [props]);
+
 	return (
 		<div className={styles['container']}>
 			<div className={styles['log']}>
 				{props.room.messages.map((msg: recievedMessage) => (
-					<p>{msg.content}</p>
+					<div className={styles['log-text']}>
+						<p className={styles['text']}>
+							{msg.author.displayName}: {msg.content}
+						</p>
+					</div>
 				))}
+				<div ref={chatBottom}></div>
 			</div>
 			<form className={styles['message-comp']} onSubmit={submitInput}>
 				<input className={styles['input']} type='text' value={input} onChange={handleInput} required={true} />
