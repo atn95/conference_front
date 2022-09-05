@@ -38,7 +38,6 @@ export const StompProvider = (props: StompProviderProps) => {
 				let subs = stompClient.subscribe(sub.endpoint, sub.callback);
 				active.push(subs);
 			}
-			console.log(active);
 			setActiveSubs(active);
 		};
 

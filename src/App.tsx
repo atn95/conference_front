@@ -3,9 +3,11 @@ import { StompProvider } from './hooks/StompProvider';
 import Main from './pages/Main';
 
 function App() {
+	const [friends, setFriends] = useState([{ room: 3 }]);
+
 	const listen = [
 		{
-			endpoint: `/topic/messages`,
+			endpoint: `/topic/room/${friends[0].room}`,
 			callback: (data: any) => {
 				console.log(JSON.parse(data.body));
 			},
@@ -13,11 +15,11 @@ function App() {
 	];
 
 	return (
-		<div className='App'>
+		<main className='app'>
 			<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen}>
-				<Main />
+				<Main friends={friends} />
 			</StompProvider>
-		</div>
+		</main>
 	);
 }
 
