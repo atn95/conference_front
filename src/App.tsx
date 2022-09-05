@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { StompProvider } from './hooks/StompProvider';
 import Main from './pages/Main';
+import './styles/App.css';
 
 function App() {
 	const [friends, setFriends] = useState([{ room: 3 }]);

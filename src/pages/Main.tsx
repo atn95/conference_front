@@ -2,6 +2,8 @@ import { MainPageProps } from '../types/PageProps';
 import { useSocket } from '../hooks/StompProvider';
 import { socketInfo } from '../types/SocketTypes';
 import { useEffect } from 'react';
+import ChatBox from '../components/ChatBox';
+
 import styles from '../styles/pages/Main.module.css';
 
 export default function Main(props: MainPageProps) {
@@ -12,7 +14,9 @@ export default function Main(props: MainPageProps) {
 			<div className={styles['side-bar']}></div>
 			<div className={styles['body']}>
 				<div className={styles['main-window']}></div>
-				<div className={styles['chat']}></div>
+				<div className={styles['chat']}>
+					<ChatBox></ChatBox>
+				</div>
 			</div>
 		</div>
 	);
