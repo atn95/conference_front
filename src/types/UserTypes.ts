@@ -2,8 +2,8 @@ import { UserProvider } from '../hooks/UserProvider';
 import { recievedMessage } from './RecieveTypes';
 
 export interface room {
-	room_id: number;
-	messages: Array<recievedMessage>;
+	id: number;
+	log: Array<recievedMessage>;
 }
 
 export interface friend {
@@ -26,9 +26,9 @@ export interface UserProviderProps {
 	children: any;
 }
 
-export interface userInfo {
+export type userInfo = {
 	user: user | null;
 	setUser: (user: user) => void;
 	rooms: Array<room>;
 	setRooms: (rooms: Array<room>) => void;
-}
+};

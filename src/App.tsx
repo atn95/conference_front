@@ -7,22 +7,23 @@ import { room, userInfo } from './types/UserTypes';
 import { useUserContext } from './hooks/UserProvider';
 
 function App() {
-	const [friends, setFriends] = useState([{ room: 3 }]);
-	const [rooms, setRooms] = useState<Array<room>>([{ room_id: 3, messages: [] }]);
-
 	const account: userInfo | null = useUserContext();
+	const { user, setUser, rooms, setRooms } = account || { user: null, setUser: null, rooms: [], setRooms: null };
+	const [room, setRoom] = useState<room | null>(null);
 
-	const listen = friends.map((friend, index) => {
+	const listen = account?.user?.friends.map((friend, index) => {
 		return {
-			endpoint: `/topic/room/${friend.room}`,
+			endpoint: `/topic/room/${friend.room.id}`,
 			callback: (data: any) => {
 				let rm = [...rooms];
-				rm[index].messages.push(JSON.parse(data.body));
-				setRooms(rm);
+				rm[index]?.log.push(JSON.parse(data.body));
+				setRooms?.(rm);
 				console.log(JSON.parse(data.body));
 			},
 		};
 	});
+
+	const [listenTo, setListenTo] = useState([]);
 
 	const getUser = async () => {
 		//will change to login post later;
@@ -37,9 +38,13 @@ function App() {
 
 	return (
 		<main className='app'>
-			<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen}>
-				<Main friends={friends} rooms={rooms} />
-			</StompProvider>
+			{user && rooms.length > 0 ? (
+				<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen!}>
+					<Main friends={account?.user?.friends} rooms={rooms} />
+				</StompProvider>
+			) : (
+				''
+			)}
 		</main>
 	);
 }

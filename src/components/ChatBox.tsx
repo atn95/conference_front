@@ -48,7 +48,7 @@ export default function ChatBox(props: ChatBoxProps) {
 	return (
 		<div className={styles['container']}>
 			<div className={styles['log']}>
-				{props.room.messages.map((msg: recievedMessage) => (
+				{props.room?.log.map((msg: recievedMessage) => (
 					<div className={styles['log-text']}>
 						<p className={styles['text']}>
 							{msg.author.displayName}: {msg.content}
@@ -63,4 +63,7 @@ export default function ChatBox(props: ChatBoxProps) {
 			</form>
 		</div>
 	);
+}
+function useUserContext(): { user: any; setUser: any; rooms: any; setRooms: any } {
+	throw new Error('Function not implemented.');
 }
