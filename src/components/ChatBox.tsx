@@ -4,6 +4,7 @@ import { message } from '../types/PostTypes';
 import { useState, useEffect, useRef, useContext } from 'react';
 import { ChatBoxProps } from '../types/ComponentProps';
 import { recievedMessage } from '../types/RecieveTypes';
+import { resolveModuleName } from 'typescript';
 
 export default function ChatBox(props: ChatBoxProps) {
 	const [input, setInput] = useState<string>('');
@@ -21,8 +22,8 @@ export default function ChatBox(props: ChatBoxProps) {
 
 	const sendChatMessage = async () => {
 		try {
-			let msg: message = { room_id: 3, author_id: 1, content: input };
-			const res = await axios.post('https://localhost:8443/api/chat/sendchat/3', msg);
+			let msg: message = { room_id: props.room.id, author_id: 1, content: input };
+			const res = await axios.post(`https://localhost:8443/api/chat/sendchat/${props.room.id}`, msg);
 			setInput('');
 			setSend(false);
 		} catch (e) {

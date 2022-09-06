@@ -39,7 +39,7 @@ function App() {
 		<main className='app'>
 			{user && rooms.length > 0 ? (
 				<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen!}>
-					<Main friends={user?.friends} rooms={rooms} />
+					<Main friends={user?.friends} />
 				</StompProvider>
 			) : (
 				''
