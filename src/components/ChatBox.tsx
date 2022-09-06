@@ -1,7 +1,7 @@
 import styles from '../styles/components/ChatBox.module.css';
 import axios from 'axios';
 import { message } from '../types/PostTypes';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { ChatBoxProps } from '../types/ComponentProps';
 import { recievedMessage } from '../types/RecieveTypes';
 
@@ -63,7 +63,4 @@ export default function ChatBox(props: ChatBoxProps) {
 			</form>
 		</div>
 	);
-}
-function useUserContext(): { user: any; setUser: any; rooms: any; setRooms: any } {
-	throw new Error('Function not implemented.');
 }

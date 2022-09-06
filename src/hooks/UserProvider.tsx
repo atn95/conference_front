@@ -29,9 +29,10 @@ export const UserProvider = (props: UserProviderProps) => {
 				friend.room.log = friend.room.log.sort((log, log2) => log.createdAt - log2.createdAt);
 				room.push(friend.room);
 			}
+			room = room.sort((r, r2) => r.id - r2.id);
 			setRooms(room);
 		}
-	}, [user?.friends]);
+	}, [user]);
 
 	// useEffect(() => {
 	// 	if (rooms.length > 0 && !loaded) {

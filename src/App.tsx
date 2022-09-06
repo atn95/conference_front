@@ -7,11 +7,10 @@ import { room, userInfo } from './types/UserTypes';
 import { useUserContext } from './hooks/UserProvider';
 
 function App() {
-	const account: userInfo | null = useUserContext();
-	const { user, setUser, rooms, setRooms } = account || { user: null, setUser: null, rooms: [], setRooms: null };
-	const [room, setRoom] = useState<room | null>(null);
+	const { user, setUser, rooms, setRooms } = useUserContext() || { user: null, setUser: null, rooms: [], setRooms: null };
+	// const [room, setRoom] = useState<room | null>(null);
 
-	const listen = account?.user?.friends.map((friend, index) => {
+	const listen = user?.friends.map((friend, index) => {
 		return {
 			endpoint: `/topic/room/${friend.room.id}`,
 			callback: (data: any) => {
@@ -23,12 +22,12 @@ function App() {
 		};
 	});
 
-	const [listenTo, setListenTo] = useState([]);
+	// const [listenTo, setListenTo] = useState([]);
 
 	const getUser = async () => {
 		//will change to login post later;
 		let res = await axios.get('https://localhost:8443/api/user/account/atn95@gmail.com');
-		return account?.setUser(res.data);
+		return setUser?.(res.data);
 	};
 
 	useEffect(() => {
@@ -40,7 +39,7 @@ function App() {
 		<main className='app'>
 			{user && rooms.length > 0 ? (
 				<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen!}>
-					<Main friends={account?.user?.friends} rooms={rooms} />
+					<Main friends={user?.friends} rooms={rooms} />
 				</StompProvider>
 			) : (
 				''
