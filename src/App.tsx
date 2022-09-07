@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { StompProvider } from './hooks/StompProvider';
 import axios from 'axios';
 import Main from './pages/Main';
-import { room, userInfo } from './types/UserTypes';
 import { useUserContext } from './hooks/UserProvider';
+import Login from './pages/Login';
 
 function App() {
 	const { user, setUser, rooms, setRooms } = useUserContext() || { user: null, setUser: null, rooms: [], setRooms: null };
@@ -26,14 +26,14 @@ function App() {
 
 	const getUser = async () => {
 		//will change to login post later;
-		let res = await axios.get('https://localhost:8443/api/user/account/atn95@gmail.com');
+		let res = await axios.get('http://localhost:8443/api/user/account/atn95@gmail.com');
 		return setUser?.(res.data);
 	};
 
-	useEffect(() => {
-		getUser();
-		//call login
-	}, []);
+	// useEffect(() => {
+	// 	getUser();
+	// 	//call login
+	// }, []);
 
 	return (
 		<main className='app'>
@@ -42,7 +42,7 @@ function App() {
 					<Main friends={user?.friends} />
 				</StompProvider>
 			) : (
-				''
+				<Login />
 			)}
 		</main>
 	);

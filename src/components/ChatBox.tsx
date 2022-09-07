@@ -4,9 +4,11 @@ import { message } from '../types/PostTypes';
 import { useState, useEffect, useRef, useContext } from 'react';
 import { ChatBoxProps } from '../types/ComponentProps';
 import { recievedMessage } from '../types/RecieveTypes';
-import { resolveModuleName } from 'typescript';
+import Client, { getCookies } from '../utils/AxiosClient';
+import { useCookies } from 'react-cookie';
 
 export default function ChatBox(props: ChatBoxProps) {
+	const [cookies, setCookie] = useCookies();
 	const [input, setInput] = useState<string>('');
 	const [send, setSend] = useState<boolean>(false);
 	const chatBottom = useRef<null | HTMLDivElement>(null);
@@ -23,16 +25,22 @@ export default function ChatBox(props: ChatBoxProps) {
 	const sendChatMessage = async () => {
 		try {
 			let msg: message = { room_id: props.room.id, author_id: 1, content: input };
-			const res = await axios.post(`https://localhost:8443/api/chat/sendchat/${props.room.id}`, msg);
+			const res = await Client.post(`/api/chat/sendchat/${props.room.id}`, msg, {
+				headers: {
+					//Cookie: 'token=' + cookies.get('token'),
+				},
+			});
 			setInput('');
 			setSend(false);
 		} catch (e) {
 			console.log(e);
+			setSend(false);
 		}
 	};
 
 	const submitInput = (e: React.FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
+		getCookies();
 		setSend(true);
 	};
 
