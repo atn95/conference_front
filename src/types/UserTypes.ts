@@ -29,6 +29,6 @@ export interface UserProviderProps {
 export type userInfo = {
 	user: user | null;
 	setUser: (user: user) => void;
-	rooms: Array<room>;
+	rooms: Array<room> | null;
 	setRooms: (rooms: Array<room>) => void;
 };

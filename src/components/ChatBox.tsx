@@ -1,35 +1,29 @@
 import styles from '../styles/components/ChatBox.module.css';
-import axios from 'axios';
 import { message } from '../types/PostTypes';
-import { useState, useEffect, useRef, useContext } from 'react';
+import { useState, useEffect, useRef, FormEvent, ChangeEvent } from 'react';
 import { ChatBoxProps } from '../types/ComponentProps';
 import { recievedMessage } from '../types/RecieveTypes';
-import Client, { getCookies } from '../utils/AxiosClient';
-import { useCookies } from 'react-cookie';
+import Client from '../utils/AxiosClient';
+import { useUserContext } from '../hooks/UserProvider';
 
 export default function ChatBox(props: ChatBoxProps) {
-	const [cookies, setCookie] = useCookies();
+	const { user } = useUserContext() || { user: null, setUser: null, rooms: [], setRooms: null };
 	const [input, setInput] = useState<string>('');
 	const [send, setSend] = useState<boolean>(false);
 	const chatBottom = useRef<null | HTMLDivElement>(null);
 
 	function scrollToBottom() {
-		console.log('called');
 		chatBottom.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
 	}
 
-	const handleInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleInput = (e: ChangeEvent<HTMLInputElement>) => {
 		setInput(e.currentTarget.value);
 	};
 
 	const sendChatMessage = async () => {
 		try {
-			let msg: message = { room_id: props.room.id, author_id: 1, content: input };
-			const res = await Client.post(`/api/chat/sendchat/${props.room.id}`, msg, {
-				headers: {
-					//Cookie: 'token=' + cookies.get('token'),
-				},
-			});
+			let msg: message = { room_id: props.room.id, author_id: user!.id, content: input };
+			const res = await Client.post(`/api/chat/sendchat/${props.room.id}`, msg);
 			setInput('');
 			setSend(false);
 		} catch (e) {
@@ -38,9 +32,8 @@ export default function ChatBox(props: ChatBoxProps) {
 		}
 	};
 
-	const submitInput = (e: React.FormEvent<HTMLFormElement>) => {
+	const submitInput = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		getCookies();
 		setSend(true);
 	};
 

@@ -7,37 +7,22 @@ import { useUserContext } from './hooks/UserProvider';
 import Login from './pages/Login';
 
 function App() {
-	const { user, setUser, rooms, setRooms } = useUserContext() || { user: null, setUser: null, rooms: [], setRooms: null };
-	// const [room, setRoom] = useState<room | null>(null);
-
-	const listen = user?.friends.map((friend, index) => {
+	const { user, setUser, rooms, setRooms } = useUserContext() || { user: null, setUser: null, rooms: null, setRooms: null };
+	const listen = rooms?.map((room, index) => {
 		return {
-			endpoint: `/topic/room/${friend.room.id}`,
+			endpoint: `/topic/room/${room.id}`,
 			callback: (data: any) => {
-				let rm = [...rooms];
+				let rm = [...(rooms ? rooms : [])];
 				rm[index]?.log.push(JSON.parse(data.body));
 				setRooms?.(rm);
-				console.log(JSON.parse(data.body));
+				console.log('Room:' + room.id, JSON.parse(data.body));
 			},
 		};
 	});
 
-	// const [listenTo, setListenTo] = useState([]);
-
-	const getUser = async () => {
-		//will change to login post later;
-		let res = await axios.get('http://localhost:8443/api/user/account/atn95@gmail.com');
-		return setUser?.(res.data);
-	};
-
-	// useEffect(() => {
-	// 	getUser();
-	// 	//call login
-	// }, []);
-
 	return (
 		<main className='app'>
-			{user && rooms.length > 0 ? (
+			{user && rooms ? (
 				<StompProvider subsribeUrl='https://localhost:8443/socket' subscriptions={listen!}>
 					<Main friends={user?.friends} />
 				</StompProvider>

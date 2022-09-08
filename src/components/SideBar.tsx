@@ -7,7 +7,7 @@ export default function SideBar(props: SideBarProps) {
 		<div>
 			<div>Current: {props.room ? props.room.id : 'No room'}</div>
 			<div>Room:</div>
-			{rooms.map((room) => (
+			{rooms?.map((room) => (
 				<div onClick={() => props.setRoom(room)}>Room: {room.id}</div>
 			))}
 		</div>

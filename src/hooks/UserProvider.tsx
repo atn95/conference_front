@@ -6,7 +6,7 @@ const UserContext = createContext<userInfo | null>(null);
 
 export const UserProvider = (props: UserProviderProps) => {
 	const [user, setUser] = useState<user | null>(null);
-	const [rooms, setRooms] = useState<Array<room>>([]);
+	const [rooms, setRooms] = useState<Array<room> | null>(null);
 	const accountInfo: userInfo = useMemo(() => {
 		return { user, setUser, rooms, setRooms };
 	}, [user, rooms]);
@@ -22,12 +22,6 @@ export const UserProvider = (props: UserProviderProps) => {
 			setRooms(room);
 		}
 	}, [user]);
-
-	// useEffect(() => {
-	// 	if (rooms.length > 0 && !loaded) {
-	// 		getLatestMessage();
-	// 	}
-	// }, [rooms]);
 
 	return <UserContext.Provider value={accountInfo}>{props.children}</UserContext.Provider>;
 };
