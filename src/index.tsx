@@ -3,11 +3,14 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { UserProvider } from './hooks/UserProvider';
+import WebRTCProvider from './hooks/WebRTCProvider';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
 	<UserProvider>
-		<App />
+		<WebRTCProvider>
+			<App />
+		</WebRTCProvider>
 	</UserProvider>
 );
 

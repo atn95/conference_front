@@ -45,6 +45,18 @@ export const StompProvider = (props: StompProviderProps) => {
 			setActiveSubs(active);
 		};
 
+		stompClient.onDisconnect = (frame: IFrame): void => {
+			for (const sub of activeSubs) {
+				sub.unsubscribe();
+			}
+		};
+
+		stompClient.onStompError = (): void => {
+			for (const sub of activeSubs) {
+				sub.unsubscribe();
+			}
+		};
+
 		stompClient.activate();
 		setClient(stompClient);
 		return () => {
