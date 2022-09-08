@@ -31,4 +31,6 @@ export type userInfo = {
 	setUser: (user: user) => void;
 	rooms: Array<room> | null;
 	setRooms: (rooms: Array<room>) => void;
+	socketId: string | null;
+	setSocketId: (id: string | null) => void | null;
 };

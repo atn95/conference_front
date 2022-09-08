@@ -2,6 +2,7 @@ import { useEffect, useState, createContext, useMemo, useContext } from 'react';
 import SockJS from 'sockjs-client';
 import { Client, IFrame, IStompSocket, StompSubscription } from '@stomp/stompjs';
 import { socketInfo, StompProviderProps, subscription } from '../types/SocketTypes';
+import { useUserContext } from './UserProvider';
 
 const StompContext = createContext<socketInfo | undefined>(undefined);
 
@@ -11,6 +12,7 @@ export const StompProvider = (props: StompProviderProps) => {
 	const [subscriptions, setSubscribed] = useState<Array<subscription>>(props.subscriptions);
 	const [activeSubs, setActiveSubs] = useState<Array<StompSubscription>>([]);
 	const wssUrl = props.subsribeUrl.replace('https', 'wss');
+	const { setSocketId } = useUserContext() || { setSocketId: null };
 	const socketInfo: socketInfo = useMemo(() => {
 		return { client, subscriptions };
 	}, [client, subscriptions]);
@@ -33,10 +35,13 @@ export const StompProvider = (props: StompProviderProps) => {
 		}
 		stompClient.onConnect = (frame: IFrame): void => {
 			const active = [];
+			console.log(frame.headers['user-name']);
+			setSocketId?.(frame.headers['user-name']);
 			for (const sub of subscriptions) {
 				let subs = stompClient.subscribe(sub.endpoint, sub.callback);
 				active.push(subs);
 			}
+			// console.log()
 			setActiveSubs(active);
 		};
 

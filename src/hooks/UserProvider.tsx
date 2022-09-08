@@ -7,9 +7,10 @@ const UserContext = createContext<userInfo | null>(null);
 export const UserProvider = (props: UserProviderProps) => {
 	const [user, setUser] = useState<user | null>(null);
 	const [rooms, setRooms] = useState<Array<room> | null>(null);
+	const [socketId, setSocketId] = useState<string | null>(null);
 	const accountInfo: userInfo = useMemo(() => {
-		return { user, setUser, rooms, setRooms };
-	}, [user, rooms]);
+		return { user, setUser, rooms, setRooms, socketId, setSocketId };
+	}, [user, rooms, socketId]);
 
 	useEffect(() => {
 		if (user) {

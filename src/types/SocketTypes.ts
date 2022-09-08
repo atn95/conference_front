@@ -14,3 +14,8 @@ export interface subscription {
 	endpoint: string;
 	callback: (data: any) => void;
 }
+
+export type socketData = {
+	type: string;
+	data: any;
+};
