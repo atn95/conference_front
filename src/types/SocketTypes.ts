@@ -5,6 +5,7 @@ export type socketInfo = {
 	subscriptions: Array<subscription> | null;
 	setSubscriptions: (subsArr: Array<subscription>) => void | null;
 	setServerUrl: (url: string) => void | null;
+	loadedSocket: boolean;
 };
 export interface StompProviderProps {
 	children: any;

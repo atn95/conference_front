@@ -2,7 +2,6 @@ import { useEffect, useState, createContext, useMemo, useContext } from 'react';
 import SockJS from 'sockjs-client';
 import { Client, IFrame, IStompSocket, StompSubscription } from '@stomp/stompjs';
 import { socketInfo, StompProviderProps, subscription } from '../types/SocketTypes';
-import { useUserContext } from './UserProvider';
 
 const StompContext = createContext<socketInfo | undefined>(undefined);
 
@@ -14,12 +13,10 @@ export const StompProvider = (props: StompProviderProps) => {
 	const [activeSubs, setActiveSubs] = useState<Array<StompSubscription>>([]);
 	const [loadedSocket, setLoadedSocket] = useState(false);
 	const socketInfo: socketInfo = useMemo(() => {
-		return { client, subscriptions, setSubscriptions, setServerUrl };
+		return { client, subscriptions, setSubscriptions, setServerUrl, loadedSocket };
 	}, [client, subscriptions, serverUrl, loadedSocket]);
 
 	useEffect(() => {
-		if (loadedSocket) {
-		}
 		return () => {
 			for (const sub of activeSubs) {
 				sub.unsubscribe();

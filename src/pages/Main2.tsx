@@ -61,9 +61,7 @@ export default function Main2(props: MainPageProps) {
 
 	return (
 		<div className={styles['container']}>
-			<div className={styles['side-bar']}>
-				<SideBar room={currentRoom} setRoom={setRoom} />
-			</div>
+			<div className={styles['side-bar']}>{/* <SideBar room={currentRoom} setRoom={setRoom} /> */}</div>
 			<div className={styles['body']}>
 				<div className={styles['main-window']}>
 					<input type='button' value='create offer' onClick={sendCallRequest} />

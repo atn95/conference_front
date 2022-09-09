@@ -6,96 +6,123 @@ import styles from '../styles/pages/Main.module.css';
 import SideBar from '../components/SideBar';
 import { room } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
-import { useWebRTC } from '../hooks/WebRTCProvider';
+import CallDisplay from '../components/CallDisplay';
+import { callInfo } from '../types/CallTypes';
+import { socketData } from '../types/SocketTypes';
 
 export default function Main(props: MainPageProps) {
-	const { user, rooms, setRooms } = useUserContext() || { user: null, rooms: null, setRooms: null };
+	const pc_config = {
+		iceServers: [
+			// {
+			//   urls: 'stun:[STUN_IP]:[PORT]',
+			//   'credentials': '[YOR CREDENTIALS]',
+			//   'username': '[USERNAME]'
+			// },
+			{
+				//Free google stun server
+				urls: 'stun:stun.l.google.com:19302',
+			},
+		],
+	};
+	const { user, rooms } = useUserContext() || { user: null, rooms: [] };
+	const [peerConnection, setPeerConnnection] = useState(new RTCPeerConnection(pc_config));
 	const [currentRoom, setRoom] = useState<room | null>(null);
-	const { client, subscriptions, setSubscriptions, setServerUrl } =
-		useSocket() ||
-		{
-			/**Fallback to empty object */
-		};
-	const { computer, createOffer } = useWebRTC() || {};
-	let localVideoRef = useRef<HTMLVideoElement>(null);
-	let remoteVideoRef = useRef<HTMLVideoElement>(null);
+	const [peerConnectionState, setPeerConnnectionState] = useState(peerConnection.connectionState);
+	const { client, subscriptions, setSubscriptions, setServerUrl, loadedSocket } = useSocket() || {};
+	const [callInfo, setCallInfo] = useState<callInfo | null>(null);
+	const [callState, setCallState] = useState(false);
 
-	const sendCallRequest = async () => {
-		/*@TODO: Do Check for existing room before creating call offer convert id to Long*/
-		const offer = await createOffer!(currentRoom!, user!.id.toString(), client!);
-		client?.publish({ destination: `/ws/call/${currentRoom?.id}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(offer), from: user!.id }) });
+	const setupConnection = (room: number) => {
+		peerConnection.onicecandidate = (e) => {
+			if (e.candidate) {
+				console.log('sending candidate from:' + user!.id);
+				client!.publish({ destination: `/ws/candidate/${room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
+			}
+		};
+		peerConnection.onconnectionstatechange = (e) => {
+			console.log(e);
+			//handleDisconnect
+			setPeerConnnection(new RTCPeerConnection(pc_config));
+		};
 	};
 
-	const streamVideoTrack = async () => {
+	//calling the room the buddy is in
+	const createCallOffer = async (friendRoomID: number) => {
 		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-			});
-			if (localVideoRef.current) {
-				localVideoRef.current.srcObject = stream;
-			}
-			//do after connection is setup
-			stream.getTracks().forEach((track) => {
-				console.log('computer', computer);
-				computer!.addTrack(track, stream);
-				console.log('added streaming track');
-			});
-		} catch (e) {
-			console.log(e);
-		} finally {
-			//regardless of if you can get media devices add remote video track
-			computer!.ontrack = (e) => {
-				console.log(e.streams);
-				console.log('add remotetrack success');
-				if (remoteVideoRef.current) {
-					remoteVideoRef.current.srcObject = e.streams[0];
-				}
-			};
+			const sdp = await peerConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+			console.log('setting local SessionDescription');
+			peerConnection.setLocalDescription(new RTCSessionDescription(sdp));
+			const newCall: callInfo = { room: friendRoomID, role: 'caller' };
+			setCallInfo(newCall);
+			setupConnection(friendRoomID);
+			//send SDP
+		} catch (error) {
+			console.log(error);
+			console.log('Something went wrong');
+		}
+	};
+
+	const createAnswer = async (sdp: RTCSessionDescription, roomId: number) => {
+		try {
+			const remoteDescription = await peerConnection.setRemoteDescription(new RTCSessionDescription(sdp));
+			console.log('Remote description Set');
+			const ans = await peerConnection.createAnswer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
+			console.log('created answer');
+			const localDescription = await peerConnection.setLocalDescription(new RTCSessionDescription(ans));
+			console.log('set local description');
+			const newCall: callInfo = { room: roomId, role: 'reciever' };
+			setCallInfo(newCall);
+			setupConnection(roomId);
+			//send answer back through socket
+		} catch (error) {
+			console.log(error);
+			console.log('Something went wrong');
 		}
 	};
 
 	useEffect(() => {
-		streamVideoTrack();
-	}, [props.inCall, computer]);
+		console.log(client);
+		if (client) {
+			const handleSocketData = async (room: room, index: number, data: socketData) => {
+				console.log(data.data);
+				if (data.type == 'call-offer') {
+					//on call offer
+					if (data.data.from !== user!.id.toString()) {
+					}
+				} else if (data.type == 'call-answer') {
+					if (data.data.from != user!.id.toString()) {
+					}
+				} else if (data.type == 'ice-candidate') {
+					if (user?.id != data.data.from) {
+					}
+				}
+			};
+
+			//do whatever cause socket exists
+			const listen = rooms!.map((room, index) => {
+				return {
+					endpoint: `/topic/call/${room.id}`,
+					callback: (data: any) => {
+						handleSocketData(room, index, JSON.parse(data.body));
+					},
+				};
+			});
+
+			const currSubs = [...subscriptions!, ...listen];
+			setSubscriptions!(currSubs);
+		}
+		// streamVideoTrack();
+	}, [loadedSocket]);
+
+	useEffect(() => {}, [peerConnection]);
 
 	return (
 		<div className={styles['container']}>
 			<div className={styles['side-bar']}>
-				<SideBar room={currentRoom} setRoom={setRoom} />
+				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} />
 			</div>
 			<div className={styles['body']}>
-				<div className={styles['main-window']}>
-					<input type='button' value='create offer' onClick={sendCallRequest} />
-					<div>
-						Local Feed
-						<video
-							style={{
-								width: 240,
-								height: 240,
-								margin: 5,
-								backgroundColor: 'black',
-							}}
-							muted
-							ref={localVideoRef}
-							autoPlay
-						/>
-					</div>
-					<div>
-						Remote
-						<video
-							id='remotevideo'
-							style={{
-								width: 240,
-								height: 240,
-								margin: 5,
-								backgroundColor: 'black',
-							}}
-							ref={remoteVideoRef}
-							autoPlay
-						/>
-					</div>
-				</div>
+				<div className={styles['main-window']}>{loadedSocket && callState ? <CallDisplay room={3} /> : ''}</div>
 				<div className={styles['chat']}>{currentRoom ? <ChatBox room={currentRoom} /> : ''}</div>
 			</div>
 		</div>
