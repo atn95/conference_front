@@ -2,7 +2,7 @@ import { createContext, useState, useMemo, useContext, useEffect } from 'react';
 import { webRTCProperties, WebRTCProviderProps } from '../types/WebRTCTypes';
 import { room } from '../types/UserTypes';
 import { Client } from '@stomp/stompjs';
-import { collapseTextChangeRangesAcrossMultipleVersions } from 'typescript';
+import { useSocket } from './StompProvider';
 
 const WebRTCContext = createContext<webRTCProperties | null>(null);
 
@@ -22,14 +22,24 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 	};
 	const [computer, setComputer] = useState<RTCPeerConnection>(new RTCPeerConnection(pc_config));
 
-	const createOffer = async (room: room | null, socketId: string, client: Client | undefined) => {
+	const createOffer = async (room: room | null, userId: string, client: Client | undefined) => {
 		const sdp = await computer.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+		computer!.onicecandidate = (e) => {
+			if (e.candidate) {
+				console.log('sending candidate', e.candidate);
+				client!.publish({ destination: `/ws/candidate/${room!.id}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
+			}
+		};
+		computer!.oniceconnectionstatechange = (e) => {
+			console.log('ice connection changed');
+			console.log(e);
+		};
 		console.log('setting local SessionDescription');
 		computer.setLocalDescription(new RTCSessionDescription(sdp));
 		return sdp;
 	};
 
-	const createAnswer = async (sdp: RTCSessionDescription) => {
+	const createAnswer = async (sdp: RTCSessionDescription, client: Client, roomId: number, userId: number) => {
 		try {
 			const remoteDescription = await computer.setRemoteDescription(new RTCSessionDescription(sdp));
 			console.log('Remote description Set');
@@ -37,6 +47,16 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 			console.log('created answer');
 			const localDescription = await computer.setLocalDescription(new RTCSessionDescription(ans));
 			console.log('set local description');
+			computer!.onicecandidate = (e) => {
+				if (e.candidate) {
+					console.log('sending candidate', e.candidate);
+					client.publish({ destination: `/ws/candidate/${roomId}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
+				}
+			};
+			computer!.oniceconnectionstatechange = (e) => {
+				console.log('ice connection changed');
+				console.log(e);
+			};
 			//send answer back through socket
 			return ans;
 		} catch (error) {
@@ -44,57 +64,6 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 			console.log('Something went wrong');
 		}
 	};
-
-	const setVideoTracks = async () => {
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-			});
-			// if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-			// if (!computer) return;
-			stream.getTracks().forEach((track) => {
-				if (!computer) return;
-				computer.addTrack(track, stream);
-				console.log('adding stream to peerConnection');
-			});
-			computer.onicecandidate = (e) => {
-				if (e.candidate) {
-					console.log(e);
-				}
-			};
-			computer.oniceconnectionstatechange = (e) => {
-				console.log(e);
-			};
-			computer.ontrack = (e) => {
-				console.log('add remotetrack success');
-				// if (remoteVideoRef.current) {
-				// 	remoteVideoRef.current.srcObject = e.streams[0];
-				// }
-			};
-		} catch (e) {
-			console.error(e);
-		}
-	};
-
-	useEffect(() => {
-		computer.onicecandidate = (e) => {
-			if (e.candidate) {
-				console.log(e);
-			}
-		};
-		computer.oniceconnectionstatechange = (e) => {
-			console.log(e);
-		};
-		computer.ontrack = (e) => {
-			console.log('add remotetrack success');
-			// if (remoteVideoRef.current) {
-			// 	remoteVideoRef.current.srcObject = e.streams[0];
-			// }
-		};
-
-		setVideoTracks();
-	}, []);
 
 	const webRTCInfo: webRTCProperties = useMemo(() => {
 		return { computer, createOffer, createAnswer };

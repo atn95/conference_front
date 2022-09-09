@@ -14,33 +14,7 @@ function App() {
 	const { computer, createAnswer } = useWebRTC() || { computer: undefined };
 	const [inCall, setInCall] = useState(false);
 	let socket = useSocket();
-
-	const handleSocketData = async (room: room, index: number, data: socketData) => {
-		if (data.type == 'chat-message') {
-			//on chat message recieve
-			let rm = [...(rooms ? rooms : [])];
-			rm[index]?.log.push(data.data);
-			setRooms?.(rm);
-			console.log('Room:' + room.id, data.data);
-		} else if (data.type == 'call-offer') {
-			//on call offer
-			if (data.data.from !== user!.id.toString()) {
-				console.log('call from:' + data.data.from);
-				//if accept create and send ans back (store as a state??? incoming calls state)
-				const ans = await createAnswer?.(JSON.parse(data.data.sdp));
-				// console.log(socket?.client);
-				socket!.client!.publish({ destination: `/ws/answer/${room.id}`, body: JSON.stringify({ type: 'video-answer', sdp: JSON.stringify(ans), from: user!.id }) });
-			}
-		} else if (data.type == 'call-answer') {
-			if (data.data.from != user!.id.toString()) {
-				console.log('call answer \n setting remote description?');
-				computer?.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.data.sdp)));
-				setInCall(true);
-			}
-		} else if (data.type == 'ice-candidate') {
-			console.log(JSON.parse(data.data));
-		}
-	};
+	const [peerConnection, setPeerConnnection] = useState(false);
 
 	useEffect(() => {
 		if (loaded) {
@@ -49,7 +23,39 @@ function App() {
 	}, [loaded]); //if user is loaded create socket connection
 
 	useEffect(() => {
-		if (socket?.client) {
+		if (socket?.client && computer) {
+			const handleSocketData = async (room: room, index: number, data: socketData) => {
+				if (data.type == 'chat-message') {
+					//on chat message recieve
+					let rm = [...(rooms ? rooms : [])];
+					rm[index]?.log.push(data.data);
+					setRooms?.(rm);
+					console.log('Room:' + room.id, data.data);
+				} else if (data.type == 'call-offer') {
+					//on call offer
+					if (data.data.from !== user!.id.toString()) {
+						console.log('call from:' + data.data.from);
+						//if accept create and send ans back (store as a state??? incoming calls state)
+						const ans = await createAnswer?.(JSON.parse(data.data.sdp), socket!.client!, room.id, user!.id);
+						// console.log(socket?.client);
+						socket!.client!.publish({ destination: `/ws/answer/${room.id}`, body: JSON.stringify({ type: 'video-answer', sdp: JSON.stringify(ans), from: user!.id }) });
+						setInCall(true);
+					}
+				} else if (data.type == 'call-answer') {
+					if (data.data.from != user!.id.toString()) {
+						console.log('call answer \n setting remote description?');
+						computer?.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.data.sdp)));
+						setInCall(true);
+					}
+				} else if (data.type == 'ice-candidate') {
+					if (user?.id != data.data.from) {
+						console.log('Recieved ICE Candidate');
+						await computer?.addIceCandidate(JSON.parse(data.data.candidate));
+						console.log('Success adding candidate');
+					}
+				}
+			};
+
 			const listen = rooms!.map((room, index) => {
 				return {
 					endpoint: `/topic/room/${room.id}`,
@@ -60,9 +66,9 @@ function App() {
 			});
 			socket?.setSubscriptions!(listen);
 		}
-	}, [socket?.client]);
+	}, [socket?.client, computer]);
 
-	return <main className='app'>{loaded ? <Main friends={user?.friends} inCall={inCall} /> : <Login />}</main>;
+	return <main className='app'>{loaded ? <Main friends={user?.friends} inCall={inCall} setInCall={setInCall} /> : <Login />}</main>;
 }
 
 export default App;

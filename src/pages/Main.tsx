@@ -8,6 +8,7 @@ import SideBar from '../components/SideBar';
 import { room } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
 import { useWebRTC } from '../hooks/WebRTCProvider';
+import { error } from 'console';
 
 export default function Main(props: MainPageProps) {
 	const { user, rooms, setRooms } = useUserContext() || { user: null, rooms: null, setRooms: null };
@@ -17,76 +18,47 @@ export default function Main(props: MainPageProps) {
 		{
 			/**Fallback to empty object */
 		};
-	const { computer, createOffer } = useWebRTC() || { computer: undefined, createOffer: null };
+	const { computer, createOffer } = useWebRTC() || {};
 	let localVideoRef = useRef<HTMLVideoElement>(null);
 	let remoteVideoRef = useRef<HTMLVideoElement>(null);
+
 	const sendCallRequest = async () => {
 		/*@TODO: Do Check for existing room before creating call offer convert id to Long*/
 		const offer = await createOffer!(currentRoom!, user!.id.toString(), client!);
 		client?.publish({ destination: `/ws/call/${currentRoom?.id}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(offer), from: user!.id }) });
 	};
 
-	// const setVideoTracks = async () => {
-	// 	try {
-	// 		const stream = await navigator.mediaDevices.getUserMedia({
-	// 			video: true,
-	// 			audio: true,
-	// 		});
-	// 		if (localVideoRef.current) {
-	// 			localVideoRef.current.srcObject = stream;
-	// 		}
-	// 		stream.getTracks().forEach((track) => {
-	// 			computer!.addTrack(track, stream);
-	// 		});
-
-	// 		computer!.oniceconnectionstatechange = (e) => {
-	// 			console.log(e);
-	// 		};
-
-	// 		computer!.ontrack = (e) => {
-	// 			console.log('add remotetrack success');
-	// 			if (remoteVideoRef.current) {
-	// 				remoteVideoRef.current.srcObject = e.streams[0];
-	// 			}
-	// 		};
-	// 	} catch {}
-	// };
-
-	// const setVideoTracks = async () => {
-	// 	try {
-	// 		const stream = await navigator.mediaDevices.getUserMedia({
-	// 			video: true,
-	// 			audio: true,
-	// 		});
-	// 		if (localVideoRef.current) localVideoRef.current.srcObject = stream;
-	// 		if (!computer) return;
-	// 		stream.getTracks().forEach((track) => {
-	// 			if (!computer) return;
-	// 			computer.addTrack(track, stream);
-	// 			console.log('adding strem to peerConnection');
-	// 		});
-	// 		computer.onicecandidate = (e) => {
-	// 			if (e.candidate) {
-	// 				console.log(e);
-	// 			}
-	// 		};
-	// 		computer.oniceconnectionstatechange = (e) => {
-	// 			console.log(e);
-	// 		};
-	// 		computer.ontrack = (e) => {
-	// 			console.log('add remotetrack success');
-	// 			if (remoteVideoRef.current) {
-	// 				remoteVideoRef.current.srcObject = e.streams[0];
-	// 			}
-	// 		};
-	// 	} catch (e) {
-	// 		console.error(e);
-	// 	}
-	// };
+	const streamVideoTrack = async () => {
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video: true,
+				audio: true,
+			});
+			if (localVideoRef.current) {
+				localVideoRef.current.srcObject = stream;
+			}
+			//do after connection is setup
+			stream.getTracks().forEach((track) => {
+				console.log('computer', computer);
+				computer!.addTrack(track, stream);
+				console.log('added streaming track');
+			});
+		} catch (e) {
+			console.log(e);
+		} finally {
+			computer!.ontrack = (e) => {
+				console.log(e.streams);
+				console.log('add remotetrack success');
+				if (remoteVideoRef.current) {
+					remoteVideoRef.current.srcObject = e.streams[0];
+				}
+			};
+		}
+	};
 
 	useEffect(() => {
-		// setVideoTracks();
-	}, []);
+		streamVideoTrack();
+	}, [props.inCall]);
 
 	return (
 		<div className={styles['container']}>

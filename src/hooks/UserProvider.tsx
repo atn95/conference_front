@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, createContext, useContext } from 'react';
 import { room, user, userInfo, UserProviderProps } from '../types/UserTypes';
-import axios from 'axios';
 
 const UserContext = createContext<userInfo | null>(null);
 
