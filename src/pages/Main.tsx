@@ -1,6 +1,5 @@
 import { MainPageProps } from '../types/PageProps';
 import { useSocket } from '../hooks/StompProvider';
-import { socketInfo } from '../types/SocketTypes';
 import { useEffect, useRef, useState } from 'react';
 import ChatBox from '../components/ChatBox';
 import styles from '../styles/pages/Main.module.css';
@@ -8,7 +7,6 @@ import SideBar from '../components/SideBar';
 import { room } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
 import { useWebRTC } from '../hooks/WebRTCProvider';
-import { error } from 'console';
 
 export default function Main(props: MainPageProps) {
 	const { user, rooms, setRooms } = useUserContext() || { user: null, rooms: null, setRooms: null };
@@ -46,6 +44,7 @@ export default function Main(props: MainPageProps) {
 		} catch (e) {
 			console.log(e);
 		} finally {
+			//regardless of if you can get media devices add remote video track
 			computer!.ontrack = (e) => {
 				console.log(e.streams);
 				console.log('add remotetrack success');

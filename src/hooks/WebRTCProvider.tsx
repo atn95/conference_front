@@ -22,6 +22,16 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 	};
 	const [computer, setComputer] = useState<RTCPeerConnection>(new RTCPeerConnection(pc_config));
 
+	const handleDisconnect = () => {
+		computer!.oniceconnectionstatechange = (e) => {
+			console.log('ice connection changed');
+			console.log(e);
+			if (computer.connectionState == 'failed') {
+				setComputer(new RTCPeerConnection(pc_config));
+			}
+		};
+	};
+
 	const createOffer = async (room: room | null, userId: string, client: Client | undefined) => {
 		const sdp = await computer.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
 		computer!.onicecandidate = (e) => {
@@ -30,10 +40,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 				client!.publish({ destination: `/ws/candidate/${room!.id}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
 			}
 		};
-		computer!.oniceconnectionstatechange = (e) => {
-			console.log('ice connection changed');
-			console.log(e);
-		};
+		handleDisconnect();
 		console.log('setting local SessionDescription');
 		computer.setLocalDescription(new RTCSessionDescription(sdp));
 		return sdp;
@@ -53,10 +60,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 					client.publish({ destination: `/ws/candidate/${roomId}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
 				}
 			};
-			computer!.oniceconnectionstatechange = (e) => {
-				console.log('ice connection changed');
-				console.log(e);
-			};
+			handleDisconnect();
 			//send answer back through socket
 			return ans;
 		} catch (error) {
