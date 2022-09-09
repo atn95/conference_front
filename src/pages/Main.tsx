@@ -26,35 +26,67 @@ export default function Main(props: MainPageProps) {
 		client?.publish({ destination: `/ws/call/${currentRoom?.id}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(offer), from: user!.id }) });
 	};
 
-	const setVideoTracks = async () => {
-		try {
-			const stream = await navigator.mediaDevices.getUserMedia({
-				video: true,
-				audio: true,
-			});
-			if (localVideoRef.current) {
-				localVideoRef.current.srcObject = stream;
-			}
-			stream.getTracks().forEach((track) => {
-				computer!.addTrack(track, stream);
-			});
+	// const setVideoTracks = async () => {
+	// 	try {
+	// 		const stream = await navigator.mediaDevices.getUserMedia({
+	// 			video: true,
+	// 			audio: true,
+	// 		});
+	// 		if (localVideoRef.current) {
+	// 			localVideoRef.current.srcObject = stream;
+	// 		}
+	// 		stream.getTracks().forEach((track) => {
+	// 			computer!.addTrack(track, stream);
+	// 		});
 
-			computer!.oniceconnectionstatechange = (e) => {
-				console.log(e);
-			};
+	// 		computer!.oniceconnectionstatechange = (e) => {
+	// 			console.log(e);
+	// 		};
 
-			computer!.ontrack = (e) => {
-				console.log('add remotetrack success');
-				if (remoteVideoRef.current) {
-					remoteVideoRef.current.srcObject = e.streams[0];
-				}
-			};
-		} catch {}
-	};
+	// 		computer!.ontrack = (e) => {
+	// 			console.log('add remotetrack success');
+	// 			if (remoteVideoRef.current) {
+	// 				remoteVideoRef.current.srcObject = e.streams[0];
+	// 			}
+	// 		};
+	// 	} catch {}
+	// };
+
+	// const setVideoTracks = async () => {
+	// 	try {
+	// 		const stream = await navigator.mediaDevices.getUserMedia({
+	// 			video: true,
+	// 			audio: true,
+	// 		});
+	// 		if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+	// 		if (!computer) return;
+	// 		stream.getTracks().forEach((track) => {
+	// 			if (!computer) return;
+	// 			computer.addTrack(track, stream);
+	// 			console.log('adding strem to peerConnection');
+	// 		});
+	// 		computer.onicecandidate = (e) => {
+	// 			if (e.candidate) {
+	// 				console.log(e);
+	// 			}
+	// 		};
+	// 		computer.oniceconnectionstatechange = (e) => {
+	// 			console.log(e);
+	// 		};
+	// 		computer.ontrack = (e) => {
+	// 			console.log('add remotetrack success');
+	// 			if (remoteVideoRef.current) {
+	// 				remoteVideoRef.current.srcObject = e.streams[0];
+	// 			}
+	// 		};
+	// 	} catch (e) {
+	// 		console.error(e);
+	// 	}
+	// };
 
 	useEffect(() => {
-		setVideoTracks();
-	}, [computer]);
+		// setVideoTracks();
+	}, []);
 
 	return (
 		<div className={styles['container']}>
@@ -64,28 +96,34 @@ export default function Main(props: MainPageProps) {
 			<div className={styles['body']}>
 				<div className={styles['main-window']}>
 					<input type='button' value='create offer' onClick={sendCallRequest} />
-					<video
-						style={{
-							width: 240,
-							height: 240,
-							margin: 5,
-							backgroundColor: 'black',
-						}}
-						muted
-						ref={localVideoRef}
-						autoPlay
-					/>
-					<video
-						id='remotevideo'
-						style={{
-							width: 240,
-							height: 240,
-							margin: 5,
-							backgroundColor: 'black',
-						}}
-						ref={remoteVideoRef}
-						autoPlay
-					/>
+					<div>
+						Local Feed
+						<video
+							style={{
+								width: 240,
+								height: 240,
+								margin: 5,
+								backgroundColor: 'black',
+							}}
+							muted
+							ref={localVideoRef}
+							autoPlay
+						/>
+					</div>
+					<div>
+						Remote
+						<video
+							id='remotevideo'
+							style={{
+								width: 240,
+								height: 240,
+								margin: 5,
+								backgroundColor: 'black',
+							}}
+							ref={remoteVideoRef}
+							autoPlay
+						/>
+					</div>
 				</div>
 				<div className={styles['chat']}>{currentRoom ? <ChatBox room={currentRoom} /> : ''}</div>
 			</div>
