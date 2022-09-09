@@ -8,7 +8,7 @@ import { room } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
 import { useWebRTC } from '../hooks/WebRTCProvider';
 
-export default function Main(props: MainPageProps) {
+export default function Main2(props: MainPageProps) {
 	const { user, rooms, setRooms } = useUserContext() || { user: null, rooms: null, setRooms: null };
 	const [currentRoom, setRoom] = useState<room | null>(null);
 	const { client, subscriptions, setSubscriptions, setServerUrl } =

@@ -26,7 +26,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 		computer!.oniceconnectionstatechange = (e) => {
 			console.log('ice connection changed');
 			console.log(e);
-			if (computer.connectionState == 'failed') {
+			if (computer.iceConnectionState == 'disconnected') {
 				setComputer(new RTCPeerConnection(pc_config));
 			}
 		};
@@ -40,6 +40,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 				client!.publish({ destination: `/ws/candidate/${room!.id}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
 			}
 		};
+
 		handleDisconnect();
 		console.log('setting local SessionDescription');
 		computer.setLocalDescription(new RTCSessionDescription(sdp));
@@ -60,6 +61,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 					client.publish({ destination: `/ws/candidate/${roomId}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: userId }) });
 				}
 			};
+
 			handleDisconnect();
 			//send answer back through socket
 			return ans;

@@ -1,12 +1,13 @@
 import './styles/App.css';
 import { useState, useEffect } from 'react';
 import { StompProvider, useSocket } from './hooks/StompProvider';
-import Main from './pages/Main';
+import Main2 from './pages/Main2';
 import { useUserContext } from './hooks/UserProvider';
 import Login from './pages/Login';
 import { room } from './types/UserTypes';
 import { socketData } from './types/SocketTypes';
 import { useWebRTC } from './hooks/WebRTCProvider';
+import Main from './pages/Main';
 
 function App() {
 	const { user, rooms, setRooms, loaded } = useUserContext() || { user: null, rooms: null, setRooms: null, loaded: false };
