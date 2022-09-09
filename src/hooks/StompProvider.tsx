@@ -9,63 +9,75 @@ const StompContext = createContext<socketInfo | undefined>(undefined);
 export const StompProvider = (props: StompProviderProps) => {
 	const [client, setClient] = useState<Client | undefined>(undefined);
 	//loop through subscribed to sub to channel
-	const [subscriptions, setSubscribed] = useState<Array<subscription>>(props.subscriptions);
+	const [serverUrl, setServerUrl] = useState<string | null>(null);
+	const [subscriptions, setSubscriptions] = useState<Array<subscription> | null>(null);
 	const [activeSubs, setActiveSubs] = useState<Array<StompSubscription>>([]);
-	const wssUrl = props.subsribeUrl.replace('https', 'wss');
-	const { setSocketId } = useUserContext() || { setSocketId: null };
+	const [loadedSocket, setLoadedSocket] = useState(false);
 	const socketInfo: socketInfo = useMemo(() => {
-		return { client, subscriptions };
-	}, [client, subscriptions]);
+		return { client, subscriptions, setSubscriptions, setServerUrl };
+	}, [client, subscriptions, serverUrl, loadedSocket]);
 
 	useEffect(() => {
-		const stompClient = new Client({
-			brokerURL: wssUrl,
-			debug: function (str) {
-				console.log(str);
-			},
-			reconnectDelay: 5000,
-			heartbeatIncoming: 4000,
-			heartbeatOutgoing: 4000,
-		});
-
-		if (typeof WebSocket !== 'function') {
-			stompClient.webSocketFactory = () => {
-				return new SockJS(props.subsribeUrl) as IStompSocket;
-			};
+		if (loadedSocket) {
 		}
-		stompClient.onConnect = (frame: IFrame): void => {
-			const active = [];
-			console.log(frame.headers['user-name']);
-			setSocketId?.(frame.headers['user-name']);
-			for (const sub of subscriptions) {
-				let subs = stompClient.subscribe(sub.endpoint, sub.callback);
-				active.push(subs);
-			}
-			// console.log()
-			setActiveSubs(active);
-		};
-
-		stompClient.onDisconnect = (frame: IFrame): void => {
-			for (const sub of activeSubs) {
-				sub.unsubscribe();
-			}
-		};
-
-		stompClient.onStompError = (): void => {
-			for (const sub of activeSubs) {
-				sub.unsubscribe();
-			}
-		};
-
-		stompClient.activate();
-		setClient(stompClient);
 		return () => {
 			for (const sub of activeSubs) {
 				sub.unsubscribe();
 			}
 			client?.deactivate();
 		};
-	}, []);
+	}, [loadedSocket]);
+
+	useEffect(() => {
+		if (client && subscriptions) {
+			client.onConnect = (frame: IFrame): void => {
+				const active = [];
+				console.log(frame.headers['user-name']);
+				for (const sub of subscriptions!) {
+					let subs = client.subscribe(sub.endpoint, sub.callback);
+					active.push(subs);
+				}
+				// console.log()
+				setActiveSubs(active);
+			};
+
+			client.onDisconnect = (frame: IFrame): void => {
+				for (const sub of activeSubs) {
+					sub.unsubscribe();
+				}
+			};
+
+			client.onStompError = (): void => {
+				for (const sub of activeSubs) {
+					sub.unsubscribe();
+				}
+			};
+
+			setLoadedSocket(true);
+			client.activate();
+		}
+	}, [client, subscriptions]);
+
+	useEffect(() => {
+		if (serverUrl) {
+			const wssUrl = serverUrl!.replace('https', 'wss');
+			const stompClient = new Client({
+				brokerURL: wssUrl,
+				debug: function (str) {
+					console.log(str);
+				},
+				reconnectDelay: 5000,
+				heartbeatIncoming: 4000,
+				heartbeatOutgoing: 4000,
+			});
+			if (typeof WebSocket !== 'function') {
+				stompClient.webSocketFactory = () => {
+					return new SockJS(serverUrl!) as IStompSocket;
+				};
+			}
+			setClient(stompClient);
+		}
+	}, [serverUrl]);
 
 	return <StompContext.Provider value={socketInfo}>{props.children}</StompContext.Provider>;
 };

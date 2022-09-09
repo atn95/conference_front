@@ -8,4 +8,5 @@ export interface WebRTCProviderProps {
 export type webRTCProperties = {
 	computer: RTCPeerConnection | undefined;
 	createOffer: (room: room, socketId: string, client: Client) => void;
+	createAnswer: (sdp: RTCSessionDescription) => void;
 };

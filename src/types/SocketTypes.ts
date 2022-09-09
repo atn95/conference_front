@@ -1,13 +1,13 @@
 import { Client } from '@stomp/stompjs';
 
-export interface socketInfo {
+export type socketInfo = {
 	client: Client | undefined;
-	subscriptions: Array<subscription>;
-}
+	subscriptions: Array<subscription> | null;
+	setSubscriptions: (subsArr: Array<subscription>) => void | null;
+	setServerUrl: (url: string) => void | null;
+};
 export interface StompProviderProps {
 	children: any;
-	subsribeUrl: string;
-	subscriptions: Array<subscription>;
 }
 
 export interface subscription {

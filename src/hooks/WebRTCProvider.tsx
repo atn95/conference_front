@@ -19,20 +19,33 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 			},
 		],
 	};
-	const [computer, setComputer] = useState<RTCPeerConnection>();
+	const [computer, setComputer] = useState<RTCPeerConnection>(new RTCPeerConnection(pc_config));
 
 	const createOffer = async (room: room | null, socketId: string, client: Client | undefined) => {
-		const localPCConnection = new RTCPeerConnection(pc_config);
-		const sdp = await localPCConnection.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
+		const sdp = await computer.createOffer({ offerToReceiveAudio: true, offerToReceiveVideo: true });
 		console.log(sdp, 'setting SessionDescription');
-		localPCConnection.setLocalDescription(new RTCSessionDescription(sdp));
-		console.log(socketId);
-		client?.publish({ destination: `/ws/call/${room?.id}`, body: JSON.stringify({ type: 'video', sdp: JSON.stringify(sdp), from: socketId }) });
+		computer.setLocalDescription(new RTCSessionDescription(sdp));
+		return sdp;
+	};
+
+	const createAnswer = async (sdp: RTCSessionDescription) => {
+		try {
+			const remoteDescription = await computer.setRemoteDescription(new RTCSessionDescription(sdp));
+			console.log('Remote description Set');
+			const ans = await computer.createAnswer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
+			console.log('created answer');
+			const localDescription = await computer.setLocalDescription(new RTCSessionDescription(ans));
+			//send answer back through socket
+			return ans;
+		} catch (error) {
+			console.log(error);
+			console.log('Something went wrong');
+		}
 	};
 
 	const webRTCInfo: webRTCProperties = useMemo(() => {
-		return { computer, createOffer };
-	}, []);
+		return { computer, createOffer, createAnswer };
+	}, [computer]);
 	return <WebRTCContext.Provider value={webRTCInfo}>{props.children}</WebRTCContext.Provider>;
 }
 
