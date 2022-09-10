@@ -2,7 +2,7 @@ import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useUserContext } from '../hooks/UserProvider';
 import Client from '../utils/AxiosClient';
-import { room } from '../types/UserTypes';
+import styles from '../styles/pages/Login.module.css';
 
 type loginform = {
 	email: string;
@@ -41,11 +41,17 @@ export default function Login() {
 	}, [loggingIn]);
 
 	return (
-		<div>
-			<form onSubmit={setLogingState}>
-				<input type='text' placeholder='email' name='email' value={loginForm.email} onChange={handleInputChange} />
-				<input type='password' placeholder='password' name='password' value={loginForm.password} onChange={handleInputChange} />
-				<input type='submit' value='login' />
+		<div className={styles['container']}>
+			<form className={styles['login-form']} onSubmit={setLogingState}>
+				<label className={styles['form-fields']} htmlFor='email'>
+					Email:
+				</label>
+				<input className={styles['form-fields']} type='text' placeholder='email' name='email' value={loginForm.email} onChange={handleInputChange} />
+				<label className={styles['form-fields']} htmlFor='password'>
+					Password:
+				</label>
+				<input className={styles['form-fields']} type='password' placeholder='password' name='password' value={loginForm.password} onChange={handleInputChange} />
+				<input className={styles['form-fields']} type='submit' value='Login' />
 			</form>
 		</div>
 	);

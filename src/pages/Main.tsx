@@ -16,9 +16,13 @@ export default function Main(props: MainPageProps) {
 			//   'credentials': '[YOR CREDENTIALS]',
 			//   'username': '[USERNAME]'
 			// },
-			{
-				urls: 'stun:stun.l.google.com:19302',
-			},
+			//Free google stuns
+			{ urls: 'stun:stun.l.google.com:19302' },
+			{ urls: 'stun:stun.l.google.com:19302' },
+			{ urls: 'stun:stun1.l.google.com:19302' },
+			{ urls: 'stun:stun2.l.google.com:19302' },
+			{ urls: 'stun:stun3.l.google.com:19302' },
+			{ urls: 'stun:stun4.l.google.com:19302' },
 		],
 	};
 	const { user, rooms } = useUserContext() || { user: null, rooms: [] };
