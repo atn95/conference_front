@@ -11,5 +11,6 @@ export interface SideBarProps {
 }
 
 export interface CallDisplayProps {
-	room: number;
+	peerConnection: RTCPeerConnection;
+	remoteStream: MediaStream | null;
 }

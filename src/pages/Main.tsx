@@ -9,6 +9,7 @@ import { useUserContext } from '../hooks/UserProvider';
 import CallDisplay from '../components/CallDisplay';
 import { callInfo } from '../types/CallTypes';
 import { socketData } from '../types/SocketTypes';
+import { error } from 'console';
 
 export default function Main(props: MainPageProps) {
 	const pc_config = {
@@ -19,7 +20,6 @@ export default function Main(props: MainPageProps) {
 			//   'username': '[USERNAME]'
 			// },
 			{
-				//Free google stun server
 				urls: 'stun:stun.l.google.com:19302',
 			},
 		],
@@ -27,23 +27,28 @@ export default function Main(props: MainPageProps) {
 	const { user, rooms } = useUserContext() || { user: null, rooms: [] };
 	const [peerConnection, setPeerConnnection] = useState(new RTCPeerConnection(pc_config));
 	const [currentRoom, setRoom] = useState<room | null>(null);
-	const [peerConnectionState, setPeerConnnectionState] = useState(peerConnection.connectionState);
 	const { client, subscriptions, setSubscriptions, setServerUrl, loadedSocket } = useSocket() || {};
 	const [callInfo, setCallInfo] = useState<callInfo | null>(null);
+	const [localStreamLoaded, setLocalStreamLoaded] = useState(false);
 	const [callState, setCallState] = useState(false);
+	const [addIceCandidate, setIceCandidate] = useState([]);
+	let localVideoRef = useRef<HTMLVideoElement>(null);
+	let remoteVideoRef = useRef<HTMLVideoElement>(null);
 
 	const setupConnection = (room: number) => {
-		peerConnection.onicecandidate = (e) => {
-			if (e.candidate) {
-				console.log('sending candidate from:' + user!.id);
-				client!.publish({ destination: `/ws/candidate/${room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
+		peerConnection.oniceconnectionstatechange = (e) => {
+			//handleDisconnect
+			console.log(e);
+			if (peerConnection.iceConnectionState == 'disconnected') {
+				// setPeerConnnection(new RTCPeerConnection(pc_config));
 			}
 		};
-		peerConnection.onconnectionstatechange = (e) => {
-			console.log(e);
-			//handleDisconnect
-			setPeerConnnection(new RTCPeerConnection(pc_config));
+		peerConnection.ontrack = (e) => {
+			console.log(e.streams);
+			remoteVideoRef!.current!.srcObject = e.streams[0];
+			console.log('add remotetrack success');
 		};
+		// await streamVideoTrack();
 	};
 
 	//calling the room the buddy is in
@@ -54,8 +59,8 @@ export default function Main(props: MainPageProps) {
 			peerConnection.setLocalDescription(new RTCSessionDescription(sdp));
 			const newCall: callInfo = { room: friendRoomID, role: 'caller' };
 			setCallInfo(newCall);
-			setupConnection(friendRoomID);
 			//send SDP
+			client!.publish({ destination: `/ws/call/${friendRoomID}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(sdp), from: user!.id }) });
 		} catch (error) {
 			console.log(error);
 			console.log('Something went wrong');
@@ -69,11 +74,14 @@ export default function Main(props: MainPageProps) {
 			const ans = await peerConnection.createAnswer({ offerToReceiveVideo: true, offerToReceiveAudio: true });
 			console.log('created answer');
 			const localDescription = await peerConnection.setLocalDescription(new RTCSessionDescription(ans));
+			setupConnection(roomId);
 			console.log('set local description');
+
 			const newCall: callInfo = { room: roomId, role: 'reciever' };
 			setCallInfo(newCall);
-			setupConnection(roomId);
 			//send answer back through socket
+			client!.publish({ destination: `/ws/answer/${roomId}`, body: JSON.stringify({ type: 'video-answer', sdp: JSON.stringify(ans), from: user!.id }) });
+			// setCallState(true);
 		} catch (error) {
 			console.log(error);
 			console.log('Something went wrong');
@@ -84,16 +92,41 @@ export default function Main(props: MainPageProps) {
 		console.log(client);
 		if (client) {
 			const handleSocketData = async (room: room, index: number, data: socketData) => {
-				console.log(data.data);
+				// console.log(data.room);
 				if (data.type == 'call-offer') {
 					//on call offer
 					if (data.data.from !== user!.id.toString()) {
+						console.log('creating answer');
+						createAnswer(JSON.parse(data.data.sdp), data.room);
+						peerConnection.onicecandidate = (e) => {
+							if (e.candidate) {
+								console.log('sending candidate from:' + user!.id);
+								client!.publish({ destination: `/ws/candidate/${data.room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
+							}
+						};
+						setupConnection(data.room);
+						setCallState(true);
 					}
 				} else if (data.type == 'call-answer') {
 					if (data.data.from != user!.id.toString()) {
+						console.log('answer-recieved');
+						peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.data.sdp)));
+						peerConnection.onicecandidate = (e) => {
+							if (e.candidate) {
+								console.log('sending candidate from:' + user!.id);
+								client!.publish({ destination: `/ws/candidate/${data.room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
+							}
+						};
+						setupConnection(data.room);
+						console.log('set remote SessionDescription');
+						setCallState(true);
 					}
 				} else if (data.type == 'ice-candidate') {
-					if (user?.id != data.data.from) {
+					console.log(JSON.parse(data.data.candidate));
+					if (data.data.from != user?.id.toString()) {
+						console.log(data.data.from, user?.id.toString());
+						await peerConnection.addIceCandidate(JSON.parse(data.data.candidate));
+						console.log('Success adding candidate');
 					}
 				}
 			};
@@ -111,10 +144,40 @@ export default function Main(props: MainPageProps) {
 			const currSubs = [...subscriptions!, ...listen];
 			setSubscriptions!(currSubs);
 		}
-		// streamVideoTrack();
 	}, [loadedSocket]);
 
-	useEffect(() => {}, [peerConnection]);
+	const streamVideoTrack = async () => {
+		console.log('streaming vid');
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({
+				video: true,
+				audio: true,
+			});
+			if (localVideoRef.current) {
+				localVideoRef.current.srcObject = stream;
+			}
+			//do after connection is setup
+			stream.getTracks().forEach((track) => {
+				console.log('computer', peerConnection);
+				peerConnection!.addTrack(track, stream);
+				console.log('added streaming track');
+			});
+			setLocalStreamLoaded(true);
+		} catch (e) {
+			console.log(e);
+		}
+	};
+
+	useEffect(() => {
+		//add at begginin?
+		// streamVideoTrack();
+		streamVideoTrack();
+		if (callState) {
+		}
+		setTimeout(() => {
+			// peerConnection.restartIce();
+		}, 5000);
+	}, [callState]);
 
 	return (
 		<div className={styles['container']}>
@@ -122,7 +185,42 @@ export default function Main(props: MainPageProps) {
 				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} />
 			</div>
 			<div className={styles['body']}>
-				<div className={styles['main-window']}>{loadedSocket && callState ? <CallDisplay room={3} /> : ''}</div>
+				<div className={styles['main-window']}>
+					{loadedSocket && callState ? (
+						<>
+							<div>
+								Local Feed
+								<video
+									style={{
+										width: 240,
+										height: 240,
+										margin: 5,
+										backgroundColor: 'black',
+									}}
+									muted
+									ref={localVideoRef}
+									autoPlay
+								/>
+							</div>
+							<div>
+								Remote
+								<video
+									id='remotevideo'
+									style={{
+										width: 240,
+										height: 240,
+										margin: 5,
+										backgroundColor: 'black',
+									}}
+									ref={remoteVideoRef}
+									autoPlay
+								/>
+							</div>
+						</>
+					) : (
+						''
+					)}
+				</div>
 				<div className={styles['chat']}>{currentRoom ? <ChatBox room={currentRoom} /> : ''}</div>
 			</div>
 		</div>

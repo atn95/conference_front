@@ -19,4 +19,5 @@ export interface subscription {
 export type socketData = {
 	type: string;
 	data: any;
+	room: number;
 };
