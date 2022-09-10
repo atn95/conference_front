@@ -27,8 +27,8 @@ export default function Main(props: MainPageProps) {
 	const { client, subscriptions, setSubscriptions, activeSubs, setActiveSubs, loadedSocket } = useSocket() || {};
 	const [localStreamLoaded, setLocalStreamLoaded] = useState(false);
 	const [callState, setCallState] = useState(false);
-	let localVideoRef = useRef<HTMLVideoElement>(null);
-	let remoteVideoRef = useRef<HTMLVideoElement>(null);
+	let smallVideo = useRef<HTMLVideoElement>(null);
+	let bigVideo = useRef<HTMLVideoElement>(null);
 
 	const setupConnection = (room: number) => {
 		peerConnection.oniceconnectionstatechange = (e) => {
@@ -44,7 +44,7 @@ export default function Main(props: MainPageProps) {
 		};
 		peerConnection.ontrack = (e) => {
 			console.log(e.streams);
-			remoteVideoRef!.current!.srcObject = e.streams[0];
+			bigVideo!.current!.srcObject = e.streams[0];
 			console.log('add remotetrack success');
 		};
 		// await streamVideoTrack();
@@ -148,8 +148,8 @@ export default function Main(props: MainPageProps) {
 				video: true,
 				audio: true,
 			});
-			if (localVideoRef.current) {
-				localVideoRef.current.srcObject = stream;
+			if (smallVideo.current) {
+				smallVideo.current.srcObject = stream;
 			}
 			//do after connection is setup
 			stream.getTracks().forEach((track) => {
@@ -261,33 +261,11 @@ export default function Main(props: MainPageProps) {
 				<div className={styles['main-window']}>
 					{loadedSocket && callState ? (
 						<>
-							<div>
-								Local Feed
-								<video
-									style={{
-										width: 240,
-										height: 240,
-										margin: 5,
-										backgroundColor: 'black',
-									}}
-									muted
-									ref={localVideoRef}
-									autoPlay
-								/>
+							<div className={styles['small-vid-container']}>
+								<video className={styles['small-vid']} muted ref={smallVideo} autoPlay controls={true} />
 							</div>
-							<div>
-								Remote
-								<video
-									id='remotevideo'
-									style={{
-										width: 240,
-										height: 240,
-										margin: 5,
-										backgroundColor: 'black',
-									}}
-									ref={remoteVideoRef}
-									autoPlay
-								/>
+							<div className={styles['big-vid-container']}>
+								<video id='remotevideo' className={styles['big-vid']} ref={bigVideo} autoPlay controls={true} />
 							</div>
 						</>
 					) : (
