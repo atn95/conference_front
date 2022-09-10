@@ -16,10 +16,14 @@ export default function Login() {
 	const [loginForm, setLoginForm] = useState(loginFormInit);
 
 	const login = async () => {
-		let res = await Client.post(`/api/user/login`, loginForm);
-		console.log(res.data);
-		setLoggingIn(false);
-		setUser!(res.data.user);
+		try {
+			let res = await Client.post(`/api/user/login`, loginForm);
+			console.log(res.data);
+			setUser!(res.data.user);
+		} catch (e) {
+		} finally {
+			setLoggingIn(false);
+		}
 		// return setUser?.(res.data);
 	};
 
@@ -43,6 +47,7 @@ export default function Login() {
 	return (
 		<div className={styles['container']}>
 			<form className={styles['login-form']} onSubmit={setLogingState}>
+				<h1 className={styles['title-txt']}>Login</h1>
 				<label className={styles['form-fields']} htmlFor='email'>
 					Email:
 				</label>
