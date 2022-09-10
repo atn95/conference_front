@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useUserContext } from '../hooks/UserProvider';
 import Client from '../utils/AxiosClient';
 import styles from '../styles/pages/Login.module.css';
+import { useNavigate } from 'react-router-dom';
 
 type loginform = {
 	email: string;
@@ -14,6 +15,7 @@ export default function Login() {
 	const [loggingIn, setLoggingIn] = useState(false);
 	const loginFormInit: loginform = { email: '', password: '' };
 	const [loginForm, setLoginForm] = useState(loginFormInit);
+	const navigate = useNavigate();
 
 	const login = async () => {
 		try {
@@ -51,12 +53,13 @@ export default function Login() {
 				<label className={styles['form-fields']} htmlFor='email'>
 					Email:
 				</label>
-				<input className={styles['form-fields']} type='text' placeholder='email' name='email' value={loginForm.email} onChange={handleInputChange} />
+				<input required className={styles['form-fields']} type='text' placeholder='email' name='email' value={loginForm.email} onChange={handleInputChange} />
 				<label className={styles['form-fields']} htmlFor='password'>
 					Password:
 				</label>
-				<input className={styles['form-fields']} type='password' placeholder='password' name='password' value={loginForm.password} onChange={handleInputChange} />
+				<input required className={styles['form-fields']} type='password' placeholder='password' name='password' value={loginForm.password} onChange={handleInputChange} />
 				<input className={styles['form-fields']} type='submit' value='Login' />
+				<input className={styles['form-fields']} type='button' value='Register' onClick={() => navigate('/register')} />
 			</form>
 		</div>
 	);

@@ -5,13 +5,16 @@ import reportWebVitals from './reportWebVitals';
 import { UserProvider } from './hooks/UserProvider';
 import WebRTCProvider from './hooks/WebRTCProvider';
 import { StompProvider } from './hooks/StompProvider';
+import { BrowserRouter } from 'react-router-dom';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
 	<UserProvider>
 		<StompProvider>
 			<WebRTCProvider>
-				<App />
+				<BrowserRouter>
+					<App />
+				</BrowserRouter>
 			</WebRTCProvider>
 		</StompProvider>
 	</UserProvider>

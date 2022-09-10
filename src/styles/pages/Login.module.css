@@ -32,7 +32,8 @@
 	border-radius: 5px;
 }
 
-input[type='submit'].form-fields {
+input[type='submit'].form-fields,
+input[type='button'].form-fields {
 	padding: 0px;
 	padding-left: 3px;
 	all: unset;

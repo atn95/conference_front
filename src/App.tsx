@@ -7,7 +7,9 @@ import Login from './pages/Login';
 import { room } from './types/UserTypes';
 import { socketData } from './types/SocketTypes';
 import { useWebRTC } from './hooks/WebRTCProvider';
+import { Routes, Route } from 'react-router-dom';
 import Main from './pages/Main';
+import Register from './pages/register';
 
 function App() {
 	const { user, rooms, setRooms, loaded } = useUserContext() || { user: null, rooms: null, setRooms: null, loaded: false };
@@ -15,7 +17,6 @@ function App() {
 	const { computer, createAnswer } = useWebRTC() || { computer: undefined };
 	const [inCall, setInCall] = useState(false);
 	let socket = useSocket();
-	const [peerConnection, setPeerConnnection] = useState(false);
 	const [reloadHack, setReloadHack] = useState<number>(0);
 
 	useEffect(() => {
@@ -48,7 +49,18 @@ function App() {
 		}
 	}, [socket?.client, computer]);
 
-	return <main className='app'>{loaded ? <Main key={reloadHack} reload={setReloadHack} friends={user?.friends} inCall={inCall} setInCall={setInCall} /> : <Login />}</main>;
+	return (
+		<main className='app'>
+			{loaded ? (
+				<Main key={reloadHack} reload={setReloadHack} friends={user?.friends} inCall={inCall} setInCall={setInCall} />
+			) : (
+				<Routes>
+					<Route path='/register' element={<Register />} />
+					<Route path='/*' element={<Login />} />
+				</Routes>
+			)}
+		</main>
+	);
 }
 
 export default App;
