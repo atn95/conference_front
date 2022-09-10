@@ -1,4 +1,3 @@
-import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useUserContext } from '../hooks/UserProvider';
 import Client from '../utils/AxiosClient';

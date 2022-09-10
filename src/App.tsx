@@ -9,7 +9,7 @@ import { socketData } from './types/SocketTypes';
 import { useWebRTC } from './hooks/WebRTCProvider';
 import { Routes, Route } from 'react-router-dom';
 import Main from './pages/Main';
-import Register from './pages/register';
+import Register from './pages/Register';
 
 function App() {
 	const { user, rooms, setRooms, loaded } = useUserContext() || { user: null, rooms: null, setRooms: null, loaded: false };
