@@ -16,6 +16,7 @@ function App() {
 	const [inCall, setInCall] = useState(false);
 	let socket = useSocket();
 	const [peerConnection, setPeerConnnection] = useState(false);
+	const [reloadHack, setReloadHack] = useState<number>(0);
 
 	useEffect(() => {
 		if (loaded) {
@@ -32,28 +33,6 @@ function App() {
 					rm[index]?.log.push(data.data);
 					setRooms?.(rm);
 					console.log('Room:' + room.id, data.data);
-				} else if (data.type == 'call-offer') {
-					//on call offer
-					if (data.data.from !== user!.id.toString()) {
-						console.log('call from:' + data.data.from);
-						//if accept create and send ans back (store as a state??? incoming calls state)
-						const ans = await createAnswer?.(JSON.parse(data.data.sdp), socket!.client!, room.id, user!.id);
-						// console.log(socket?.client);
-						socket!.client!.publish({ destination: `/ws/answer/${room.id}`, body: JSON.stringify({ type: 'video-answer', sdp: JSON.stringify(ans), from: user!.id }) });
-						setInCall(true);
-					}
-				} else if (data.type == 'call-answer') {
-					if (data.data.from != user!.id.toString()) {
-						console.log('call answer \n setting remote description?');
-						computer?.setRemoteDescription(new RTCSessionDescription(JSON.parse(data.data.sdp)));
-						setInCall(true);
-					}
-				} else if (data.type == 'ice-candidate') {
-					if (user?.id != data.data.from) {
-						console.log('Recieved ICE Candidate');
-						await computer?.addIceCandidate(JSON.parse(data.data.candidate));
-						console.log('Success adding candidate');
-					}
 				}
 			};
 
@@ -69,7 +48,7 @@ function App() {
 		}
 	}, [socket?.client, computer]);
 
-	return <main className='app'>{loaded ? <Main friends={user?.friends} inCall={inCall} setInCall={setInCall} /> : <Login />}</main>;
+	return <main className='app'>{loaded ? <Main key={reloadHack} reload={setReloadHack} friends={user?.friends} inCall={inCall} setInCall={setInCall} /> : <Login />}</main>;
 }
 
 export default App;

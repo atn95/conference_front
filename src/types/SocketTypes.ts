@@ -1,4 +1,4 @@
-import { Client } from '@stomp/stompjs';
+import { Client, StompSubscription } from '@stomp/stompjs';
 
 export type socketInfo = {
 	client: Client | undefined;
@@ -6,6 +6,8 @@ export type socketInfo = {
 	setSubscriptions: (subsArr: Array<subscription>) => void | null;
 	setServerUrl: (url: string) => void | null;
 	loadedSocket: boolean;
+	setActiveSubs: (activesubs: Array<StompSubscription>) => void;
+	activeSubs: Array<StompSubscription>;
 };
 export interface StompProviderProps {
 	children: any;

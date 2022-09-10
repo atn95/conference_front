@@ -13,7 +13,7 @@ export const StompProvider = (props: StompProviderProps) => {
 	const [activeSubs, setActiveSubs] = useState<Array<StompSubscription>>([]);
 	const [loadedSocket, setLoadedSocket] = useState(false);
 	const socketInfo: socketInfo = useMemo(() => {
-		return { client, subscriptions, setSubscriptions, setServerUrl, loadedSocket };
+		return { client, subscriptions, setSubscriptions, setServerUrl, loadedSocket, activeSubs, setActiveSubs };
 	}, [client, subscriptions, serverUrl, loadedSocket]);
 
 	useEffect(() => {
