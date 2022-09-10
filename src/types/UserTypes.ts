@@ -4,12 +4,23 @@ import { recievedMessage } from './RecieveTypes';
 export interface room {
 	id: number;
 	log: Array<recievedMessage>;
+	relation: { user: number; friend: number };
+}
+
+export interface relation {
+	id: number;
+	account: number;
+	room: room;
+	friend: friend;
 }
 
 export interface friend {
 	id: number;
-	account: number;
-	room: room;
+	email: string;
+	displayName: string;
+	firstName: string;
+	lastname: string;
+	status: number;
 }
 
 export interface user {
@@ -19,7 +30,7 @@ export interface user {
 	lastName: string;
 	displayName: string;
 	status: number;
-	friends: Array<friend>;
+	friends: Array<relation>;
 }
 
 export interface UserProviderProps {

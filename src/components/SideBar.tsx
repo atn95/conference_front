@@ -2,15 +2,21 @@ import { useUserContext } from '../hooks/UserProvider';
 import { SideBarProps } from '../types/ComponentProps';
 
 export default function SideBar(props: SideBarProps) {
-	const { rooms } = useUserContext() || { rooms: [] };
+	const { user, rooms } = useUserContext() || { rooms: [] };
+
+	const selectRoom = (friendId: number) => {
+		const friendRelation = rooms?.map((room) => room.relation.friend);
+		props.setRoom(rooms![friendRelation!.indexOf(friendId)]);
+	};
+
 	return (
 		<div>
 			<div>Current: {props.room ? props.room.id : 'No room'}</div>
 			<div>Room:</div>
-			{rooms?.map((room) => (
-				<div onClick={() => props.setRoom(room)}>
-					<h1>Room: {room.id}</h1>
-					<input type='button' value='call' onClick={() => props.call(room.id)} />
+			{user?.friends.map((relation) => (
+				<div onClick={() => selectRoom(relation.friend.id)}>
+					<h1>Name: {relation.friend.displayName}</h1>
+					<input type='button' value='call' onClick={() => props.call(relation.id)} />
 				</div>
 			))}
 		</div>

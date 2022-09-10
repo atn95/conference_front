@@ -27,8 +27,8 @@ export default function Main(props: MainPageProps) {
 	const { client, subscriptions, setSubscriptions, activeSubs, setActiveSubs, loadedSocket } = useSocket() || {};
 	const [localStreamLoaded, setLocalStreamLoaded] = useState(false);
 	const [callState, setCallState] = useState(false);
-	let smallVideo = useRef<HTMLVideoElement>(null);
-	let bigVideo = useRef<HTMLVideoElement>(null);
+	let localVidFeed = useRef<HTMLVideoElement>(null);
+	let remoteVidFeed = useRef<HTMLVideoElement>(null);
 
 	const setupConnection = (room: number) => {
 		peerConnection.oniceconnectionstatechange = (e) => {
@@ -44,7 +44,7 @@ export default function Main(props: MainPageProps) {
 		};
 		peerConnection.ontrack = (e) => {
 			console.log(e.streams);
-			bigVideo!.current!.srcObject = e.streams[0];
+			remoteVidFeed!.current!.srcObject = e.streams[0];
 			console.log('add remotetrack success');
 		};
 		// await streamVideoTrack();
@@ -148,8 +148,8 @@ export default function Main(props: MainPageProps) {
 				video: true,
 				audio: true,
 			});
-			if (smallVideo.current) {
-				smallVideo.current.srcObject = stream;
+			if (localVidFeed.current) {
+				localVidFeed.current.srcObject = stream;
 			}
 			//do after connection is setup
 			stream.getTracks().forEach((track) => {
@@ -262,10 +262,10 @@ export default function Main(props: MainPageProps) {
 					{loadedSocket && callState ? (
 						<>
 							<div className={styles['small-vid-container']}>
-								<video className={styles['small-vid']} muted ref={smallVideo} autoPlay controls={true} />
+								<video className={styles['small-vid']} muted ref={localVidFeed} autoPlay controls={true} />
 							</div>
 							<div className={styles['big-vid-container']}>
-								<video id='remotevideo' className={styles['big-vid']} ref={bigVideo} autoPlay controls={true} />
+								<video id='remotevideo' className={styles['big-vid']} ref={remoteVidFeed} autoPlay controls={true} />
 							</div>
 						</>
 					) : (
