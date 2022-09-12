@@ -1,5 +1,6 @@
 import styles from '../styles/pages/Register.module.css';
-import { ChangeEvent, SyntheticEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, SyntheticEvent, useEffect, useState } from 'react';
+import Client from '../utils/AxiosClient';
 
 type registrationForm = {
 	firstName: string;
@@ -29,8 +30,21 @@ export default function Register() {
 	};
 
 	const register = async () => {
+		try {
+			const res = await Client.post('/api/user/register', registerationInfo);
+			console.log(res.data);
+		} catch (e) {
+		} finally {
+			console.log('success');
+			setSubmitInput(false);
+		}
 		//do axios call
-		setSubmitInput(false);
+	};
+
+	const submitForm = (e: FormEvent<HTMLFormElement>) => {
+		e.preventDefault();
+		setSubmitInput(true);
+		console.log('submitting form');
 	};
 
 	useEffect(() => {
@@ -41,7 +55,7 @@ export default function Register() {
 
 	return (
 		<div className={styles['container']}>
-			<form onSubmit={() => setSubmitInput(true)} className={styles['registration-form']}>
+			<form onSubmit={submitForm} className={styles['registration-form']}>
 				<h1 className={styles['title-txt']}>Register:</h1>
 				<label className={styles['fields']} htmlFor='firstName'>
 					First Name:
@@ -66,7 +80,7 @@ export default function Register() {
 				<label className={styles['fields']} htmlFor='passwordConfirm'>
 					Confirm Password:
 				</label>
-				<input className={styles['fields']} required type='text' name='passwordConfirm' onChange={handleInputChange} value={registerationInfo.passwordConfirm} />
+				<input className={styles['fields']} required type='password' name='passwordConfirm' onChange={handleInputChange} value={registerationInfo.passwordConfirm} />
 				<input className={styles['fields']} type='submit' value='Register' />
 			</form>
 		</div>
