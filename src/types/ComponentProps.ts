@@ -1,4 +1,4 @@
-import { room } from './UserTypes';
+import { room, userSearchResult } from './UserTypes';
 
 export interface ChatBoxProps {
 	room: room;
@@ -13,4 +13,9 @@ export interface SideBarProps {
 export interface CallDisplayProps {
 	peerConnection: RTCPeerConnection;
 	remoteStream: MediaStream | null;
+}
+
+
+export interface UserCardProps {
+	user: userSearchResult;
 }

@@ -33,6 +33,15 @@ export interface user {
 	friends: Array<relation>;
 }
 
+export interface userSearchResult {
+	id: number;
+	email: string;
+	displayName: string;
+	firstName: string;
+	lastName: string;
+	sentRequest: boolean;
+}
+
 export interface UserProviderProps {
 	children: any;
 }

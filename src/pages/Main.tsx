@@ -7,6 +7,7 @@ import SideBar from '../components/SideBar';
 import { room } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
 import { socketData } from '../types/SocketTypes';
+import FriendRequest from '../components/FriendRequest';
 
 export default function Main(props: MainPageProps) {
 	const pc_config = {
@@ -33,6 +34,8 @@ export default function Main(props: MainPageProps) {
 	const [callState, setCallState] = useState(false);
 	let localVidFeed = useRef<HTMLVideoElement>(null);
 	let remoteVidFeed = useRef<HTMLVideoElement>(null);
+
+	//@TODO: implement later
 	let webRTCClientRef = useRef<RTCPeerConnection>();
 	webRTCClientRef.current = peerConnection;
 
@@ -257,12 +260,9 @@ export default function Main(props: MainPageProps) {
 		}
 	}, [callState]);
 
-	// useEffect(() => {
-	// 	streamVideoTrack();
-	// }, [peerConnection]);
-
 	return (
 		<div className={styles['container']}>
+			<FriendRequest />
 			<div className={styles['side-bar']}>
 				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} />
 			</div>
