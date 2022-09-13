@@ -26,6 +26,7 @@ export default function Main(props: MainPageProps) {
 			{ urls: 'stun:stun4.l.google.com:19302' },
 		],
 	};
+	const [newFriendPopUp, setNewFriendPopUp] = useState(false);
 	const { user, rooms } = useUserContext() || { user: null, rooms: [] };
 	const [peerConnection, setPeerConnnection] = useState(new RTCPeerConnection(pc_config));
 	const [currentRoom, setRoom] = useState<room | null>(null);
@@ -262,9 +263,9 @@ export default function Main(props: MainPageProps) {
 
 	return (
 		<div className={styles['container']}>
-			<FriendRequest />
+			{newFriendPopUp ? <FriendRequest /> : ''}
 			<div className={styles['side-bar']}>
-				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} />
+				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} showAddFriendPop={newFriendPopUp} setFriendReqPop={setNewFriendPopUp} />
 			</div>
 			<div className={styles['body']}>
 				<div className={styles['main-window']}>

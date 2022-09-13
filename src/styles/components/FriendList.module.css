@@ -1,0 +1,13 @@
+.friend-item {
+	border-bottom: 1px solid gray;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	height: 40px;
+}
+
+.friend-item input {
+	margin-right: 5px;
+	max-height: 70%;
+	max-width: 70%;
+}
