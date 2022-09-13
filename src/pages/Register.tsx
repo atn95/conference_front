@@ -1,6 +1,7 @@
 import styles from '../styles/pages/Register.module.css';
-import { ChangeEvent, FormEvent, SyntheticEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import Client from '../utils/AxiosClient';
+import { useNavigate } from 'react-router-dom';
 
 type registrationForm = {
 	firstName: string;
@@ -20,6 +21,7 @@ export default function Register() {
 		password: '',
 		passwordConfirm: '',
 	};
+	const navigate = useNavigate();
 	const [registerationInfo, setRegistrationInfo] = useState(initialForm);
 	const [submitInput, setSubmitInput] = useState(false);
 
@@ -32,7 +34,7 @@ export default function Register() {
 	const register = async () => {
 		try {
 			const res = await Client.post('/api/user/register', registerationInfo);
-			console.log(res.data);
+			navigate('/login');
 		} catch (e) {
 		} finally {
 			console.log('success');

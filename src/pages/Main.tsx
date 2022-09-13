@@ -33,6 +33,8 @@ export default function Main(props: MainPageProps) {
 	const [callState, setCallState] = useState(false);
 	let localVidFeed = useRef<HTMLVideoElement>(null);
 	let remoteVidFeed = useRef<HTMLVideoElement>(null);
+	let webRTCClientRef = useRef<RTCPeerConnection>();
+	webRTCClientRef.current = peerConnection;
 
 	const setupConnection = (room: number) => {
 		peerConnection.oniceconnectionstatechange = (e) => {
@@ -42,7 +44,9 @@ export default function Main(props: MainPageProps) {
 				setCallState(false);
 				props.reload((prev: number) => prev + 1);
 				peerConnection.close();
-				setPeerConnnection(new RTCPeerConnection(pc_config));
+				const newRTCClient = new RTCPeerConnection(pc_config);
+				setPeerConnnection(newRTCClient);
+				webRTCClientRef.current = newRTCClient;
 				console.log(peerConnection);
 			}
 		};
@@ -62,7 +66,8 @@ export default function Main(props: MainPageProps) {
 			peerConnection.setLocalDescription(new RTCSessionDescription(sdp));
 			//send SDP
 			client!.publish({ destination: `/ws/call/${friendRoomID}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(sdp), from: user!.id }) });
-			setCallState(false);
+			console.log({ destination: `/ws/call/${friendRoomID}`, body: JSON.stringify({ type: 'video-offer', sdp: JSON.stringify(sdp), from: user!.id }) });
+			// setCallState(true);
 		} catch (error) {
 			console.log(error);
 			console.log('Something went wrong');
@@ -89,7 +94,8 @@ export default function Main(props: MainPageProps) {
 
 	useEffect(() => {
 		const handleSocketData = async (room: room, index: number, data: socketData) => {
-			// console.log(data.room);
+			console.log(data.room);
+			console.log(data.data);
 			if (data.type == 'call-offer') {
 				//on call offer
 				if (data.data.from !== user!.id.toString()) {
@@ -121,7 +127,6 @@ export default function Main(props: MainPageProps) {
 			} else if (data.type == 'ice-candidate') {
 				console.log(JSON.parse(data.data.candidate));
 				if (data.data.from != user?.id.toString()) {
-					console.log(data.data.from, user?.id.toString());
 					await peerConnection.addIceCandidate(JSON.parse(data.data.candidate));
 					console.log('Success adding candidate');
 				}
