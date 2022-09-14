@@ -10,6 +10,8 @@ export interface SideBarProps {
 	call: (friendRoomID: number) => void;
 	showAddFriendPop: boolean;
 	setFriendReqPop: (show:boolean) => void;
+	pendingFriendReq: Array<userSearchResult>;
+	setPendingFriendReq: (pendingReq: Array<userSearchResult>) => void;
 }
 
 export interface CallDisplayProps {
@@ -25,4 +27,8 @@ export interface UserCardProps {
 export interface FriendListProps {
 	call: (room: number)=> void;
 	selectRoom: (id:number) => void;
+}
+export interface PendingFriendRequestProps {
+	pendingFriendReq: Array<userSearchResult>;
+	setPendingFriendReq: (pendingReq: Array<userSearchResult>) => void;
 }

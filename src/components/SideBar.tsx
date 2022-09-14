@@ -4,6 +4,7 @@ import styles from '../styles/components/SideBar.module.css';
 
 import { useState } from 'react';
 import FriendList from './FriendList';
+import PendingFriendRequestPopUp from './PendingFriendRequest';
 
 export default function SideBar(props: SideBarProps) {
 	const userInfo = useUserContext();
@@ -32,7 +33,7 @@ export default function SideBar(props: SideBarProps) {
 						Pending
 					</div>
 				</div>
-				<div>{selectedList == 0 ? <FriendList call={props.call} selectRoom={selectRoom} /> : ''}</div>
+				<div>{selectedList == 0 ? <FriendList call={props.call} selectRoom={selectRoom} /> : <PendingFriendRequestPopUp pendingFriendReq={props.pendingFriendReq} setPendingFriendReq={props.setPendingFriendReq} />}</div>
 			</div>{' '}
 			<div className={styles['add-friend-btn']} onClick={toggleFrienAdd}>
 				Add Friend

@@ -1,7 +1,6 @@
 import './styles/App.css';
 import { useState, useEffect } from 'react';
-import { StompProvider, useSocket } from './hooks/StompProvider';
-import Main2 from './pages/Main2';
+import { useSocket } from './hooks/StompProvider';
 import { useUserContext } from './hooks/UserProvider';
 import Login from './pages/Login';
 import { room } from './types/UserTypes';

@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from 'react';
 import ChatBox from '../components/ChatBox';
 import styles from '../styles/pages/Main.module.css';
 import SideBar from '../components/SideBar';
-import { room } from '../types/UserTypes';
+import { room, userSearchResult } from '../types/UserTypes';
 import { useUserContext } from '../hooks/UserProvider';
 import { socketData } from '../types/SocketTypes';
-import FriendRequest from '../components/FriendRequest';
+import FriendRequest from '../components/FriendRequestPopUp';
+import Client from '../utils/AxiosClient';
 
 export default function Main(props: MainPageProps) {
 	const pc_config = {
@@ -31,8 +32,13 @@ export default function Main(props: MainPageProps) {
 	const [peerConnection, setPeerConnnection] = useState(new RTCPeerConnection(pc_config));
 	const [currentRoom, setRoom] = useState<room | null>(null);
 	const { client, subscriptions, setSubscriptions, activeSubs, setActiveSubs, loadedSocket } = useSocket() || {};
+	const [pendingFriendReq, setPendingFriendReq] = useState<Array<userSearchResult>>([]);
 	const [localStreamLoaded, setLocalStreamLoaded] = useState(false);
 	const [callState, setCallState] = useState(false);
+
+	const [incomingCall, setIncomingCall] = useState(false);
+	const [callInformation, setCallInformation] = useState<any>(null);
+
 	let localVidFeed = useRef<HTMLVideoElement>(null);
 	let remoteVidFeed = useRef<HTMLVideoElement>(null);
 
@@ -96,23 +102,38 @@ export default function Main(props: MainPageProps) {
 		}
 	};
 
+	const loadFriendReq = async () => {
+		try {
+			const res = await Client.get(`/api/user/pending/${user!.id}`);
+			console.log(res.data);
+			setPendingFriendReq(res.data);
+		} catch (e) {}
+	};
+
+	const accept = () => {
+		console.log('creating answer');
+		createAnswer(JSON.parse(callInformation.data.data.sdp), callInformation.data.room);
+		peerConnection.onicecandidate = (e) => {
+			if (e.candidate) {
+				console.log('sending candidate from:' + user!.id);
+				client!.publish({ destination: `/ws/candidate/${callInformation.data.room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
+			}
+		};
+		setupConnection(callInformation.data.room);
+		setIncomingCall(false);
+		setCallInformation(null);
+		setCallState(true);
+	};
+
+	const reject = () => {};
+
 	useEffect(() => {
 		const handleSocketData = async (room: room, index: number, data: socketData) => {
-			console.log(data.room);
-			console.log(data.data);
 			if (data.type == 'call-offer') {
 				//on call offer
 				if (data.data.from !== user!.id.toString()) {
-					console.log('creating answer');
-					createAnswer(JSON.parse(data.data.sdp), data.room);
-					peerConnection.onicecandidate = (e) => {
-						if (e.candidate) {
-							console.log('sending candidate from:' + user!.id);
-							client!.publish({ destination: `/ws/candidate/${data.room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
-						}
-					};
-					setupConnection(data.room);
-					setCallState(true);
+					setIncomingCall(true);
+					setCallInformation({ room, index, data });
 				}
 			} else if (data.type == 'call-answer') {
 				if (data.data.from != user!.id.toString()) {
@@ -134,6 +155,13 @@ export default function Main(props: MainPageProps) {
 					await peerConnection.addIceCandidate(JSON.parse(data.data.candidate));
 					console.log('Success adding candidate');
 				}
+			} else if (data.type == 'reject') {
+				setCallState(false);
+				props.reload((prev: number) => prev + 1);
+				peerConnection.close();
+				const newRTCClient = new RTCPeerConnection(pc_config);
+				setPeerConnnection(newRTCClient);
+				webRTCClientRef.current = newRTCClient;
 			}
 		};
 		console.log(client);
@@ -151,6 +179,9 @@ export default function Main(props: MainPageProps) {
 			const currSubs = [...subscriptions!, ...listen];
 			setSubscriptions!(currSubs);
 			console.log('updated callbacks');
+
+			//load pending request
+			loadFriendReq();
 		}
 	}, [loadedSocket]);
 
@@ -185,16 +216,8 @@ export default function Main(props: MainPageProps) {
 				if (data.type == 'call-offer') {
 					//on call offer
 					if (data.data.from !== user!.id.toString()) {
-						console.log('creating answer');
-						createAnswer(JSON.parse(data.data.sdp), data.room);
-						peerConnection.onicecandidate = (e) => {
-							if (e.candidate) {
-								console.log('sending candidate from:' + user!.id);
-								client!.publish({ destination: `/ws/candidate/${data.room}`, body: JSON.stringify({ type: 'candidate', candidate: JSON.stringify(e.candidate), from: user!.id }) });
-							}
-						};
-						setupConnection(data.room);
-						setCallState(true);
+						setIncomingCall(true);
+						setCallInformation({ room, index, data });
 					}
 				} else if (data.type == 'call-answer') {
 					if (data.data.from != user!.id.toString()) {
@@ -217,6 +240,13 @@ export default function Main(props: MainPageProps) {
 						await peerConnection.addIceCandidate(JSON.parse(data.data.candidate));
 						console.log('Success adding candidate');
 					}
+				} else if (data.type == 'reject') {
+					setCallState(false);
+					props.reload((prev: number) => prev + 1);
+					peerConnection.close();
+					const newRTCClient = new RTCPeerConnection(pc_config);
+					setPeerConnnection(newRTCClient);
+					webRTCClientRef.current = newRTCClient;
 				}
 			};
 			const updateAndRestartSocket = () => {
@@ -261,11 +291,21 @@ export default function Main(props: MainPageProps) {
 		}
 	}, [callState]);
 
+	useEffect(() => {}, [incomingCall]);
+
 	return (
 		<div className={styles['container']}>
 			{newFriendPopUp ? <FriendRequest /> : ''}
+			{incomingCall ? (
+				<div className={styles['call-popup-container']}>
+					<div onClick={reject}>X</div>
+					<div onClick={accept}>✓</div>
+				</div>
+			) : (
+				''
+			)}
 			<div className={styles['side-bar']}>
-				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} showAddFriendPop={newFriendPopUp} setFriendReqPop={setNewFriendPopUp} />
+				<SideBar room={currentRoom} setRoom={setRoom} call={createCallOffer} showAddFriendPop={newFriendPopUp} setFriendReqPop={setNewFriendPopUp} pendingFriendReq={pendingFriendReq} setPendingFriendReq={setPendingFriendReq} />
 			</div>
 			<div className={styles['body']}>
 				<div className={styles['main-window']}>

@@ -35,6 +35,7 @@ export default function UserCard(props: UserCardProps) {
 	return (
 		<div className={styles['container']}>
 			<div>Email: {person.email}</div>
+			<div>Screen Name: {person.displayName}</div>
 			<div className={styles['add']} onClick={handleAddRequest}>
 				{!person.sentRequest ? 'Add' : 'Pending'}
 			</div>
