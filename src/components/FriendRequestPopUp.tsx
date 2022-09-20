@@ -41,7 +41,7 @@ export default function FriendRequest() {
 	return (
 		<div className={styles['container']}>
 			<form onSubmit={handleFormSubmit}>
-				<input type='text' name='search' value={searchQuery} onChange={handleSearchQueryChange} />
+				<input type='text' name='search' value={searchQuery} onChange={handleSearchQueryChange} placeholder='Enter Email Address' />
 				<input type='submit' value='search' />
 			</form>
 			<div className={styles['result-body']}>

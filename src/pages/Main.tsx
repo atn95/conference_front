@@ -125,7 +125,16 @@ export default function Main(props: MainPageProps) {
 		setCallState(true);
 	};
 
-	const reject = () => {};
+	const reject = () => {
+		console.log('rejecting');
+		client!.publish({ destination: `/ws/reject/${callInformation.data.room}`, body: JSON.stringify({ type: 'candidate' }) });
+		setCallState(false);
+		props.reload((prev: number) => prev + 1);
+		peerConnection.close();
+		const newRTCClient = new RTCPeerConnection(pc_config);
+		setPeerConnnection(newRTCClient);
+		webRTCClientRef.current = newRTCClient;
+	};
 
 	useEffect(() => {
 		const handleSocketData = async (room: room, index: number, data: socketData) => {
@@ -162,6 +171,9 @@ export default function Main(props: MainPageProps) {
 				const newRTCClient = new RTCPeerConnection(pc_config);
 				setPeerConnnection(newRTCClient);
 				webRTCClientRef.current = newRTCClient;
+			} else if (data.type == 'new-friend-req') {
+				//handle a new req push
+				// setPendingFriendReq([...pendingFriendReq, data.data]);
 			}
 		};
 		console.log(client);
