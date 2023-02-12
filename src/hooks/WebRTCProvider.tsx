@@ -74,6 +74,7 @@ export default function WebRTCProvider(props: WebRTCProviderProps) {
 	const webRTCInfo: webRTCProperties = useMemo(() => {
 		return { computer, createOffer, createAnswer };
 	}, [computer]);
+
 	return <WebRTCContext.Provider value={webRTCInfo}>{props.children}</WebRTCContext.Provider>;
 }
 
